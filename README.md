@@ -1,6 +1,6 @@
 # physio-portal
 
-PT-BR single-user web app for a physiotherapist to manage patients, recurring sessions, weekly/monthly billing, and signed monthly PDF reports. Runs locally via `docker-compose up`.
+Web app for a physiotherapist to manage patients, recurring sessions, weekly/monthly billing, and signed monthly PDF reports. Runs locally via `docker-compose up`.
 
 ## Planned features
 
@@ -26,16 +26,16 @@ UI strings are written directly in PT-BR in JSX — the project is monolingual a
 
 The scripts below will be wired up as each stage lands. None exist today.
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` (root) | Start API (`:3000`) and Web (`:5173`) |
-| `npm test` (root) | Backend + frontend with the 100% coverage gate |
-| `npm run lint` / `npm run typecheck` | Static checks across workspaces |
-| `npm run db:migrate -w apps/api` | Apply pending migrations |
-| `npm run db:migrate:down -w apps/api` | Revert the last applied migration |
-| `npm run db:migrate:status -w apps/api` | Show applied vs pending migrations |
-| `npm run db:seed -w apps/api` | Seed the physiotherapist from env vars |
-| `docker-compose up` | Boot postgres + api + web for local use |
+| Command                                 | Purpose                                        |
+| --------------------------------------- | ---------------------------------------------- |
+| `npm run dev` (root)                    | Start API (`:3000`) and Web (`:5173`)          |
+| `npm test` (root)                       | Backend + frontend with the 100% coverage gate |
+| `npm run lint` / `npm run typecheck`    | Static checks across workspaces                |
+| `npm run db:migrate -w apps/api`        | Apply pending migrations                       |
+| `npm run db:migrate:down -w apps/api`   | Revert the last applied migration              |
+| `npm run db:migrate:status -w apps/api` | Show applied vs pending migrations             |
+| `npm run db:seed -w apps/api`           | Seed the physiotherapist from env vars         |
+| `docker-compose up`                     | Boot postgres + api + web for local use        |
 
 ## Roadmap
 
