@@ -1,53 +1,51 @@
 # physio-portal
 
-Aplicação web PT-BR single-user para uma fisioterapeuta gerenciar pacientes, sessões recorrentes, faturamento semanal/mensal e emitir relatórios mensais em PDF assinados. Roda localmente via `docker-compose up`.
+PT-BR single-user web app for a physiotherapist to manage patients, recurring sessions, weekly/monthly billing, and signed monthly PDF reports. Runs locally via `docker-compose up`.
 
-> **Status:** projeto _greenfield_. Apenas o documento de design (`plan.md`) e este README existem — Stage 0 (fundação do monorepo) ainda não foi iniciado, então o repositório ainda **não é executável**.
+## Planned features
 
-## Funcionalidades planejadas
-
-- Login da fisioterapeuta (single-user, JWT).
-- CRUD de pacientes com link direto para WhatsApp.
-- Schedule recorrente por paciente (dias da semana fixos) com geração automática de sessões.
-- Marcação de sessão como **Realizada / Falta / Remarcada** — apenas `REALIZADA` fatura.
-- Dashboard de totais por semana/mês (geral e por paciente).
-- PDF mensal por paciente com assinatura em imagem e total em BRL.
+- Physiotherapist login (single-user, JWT).
+- Patient CRUD with a direct WhatsApp link.
+- Per-patient recurring schedule (fixed weekdays) with automatic session generation.
+- Session status as **Realizada / Falta / Remarcada** — only `REALIZADA` bills.
+- Dashboard with weekly/monthly totals (overall and per patient).
+- Monthly per-patient PDF with image signature and total in BRL.
 
 ## Stack
 
-- **Monorepo:** npm workspaces (sem Turborepo/Nx).
-- **Backend (`apps/api`):** Express + `pg` (sem ORM) + tsyringe (DI) + Zod + JWT + pdfkit.
+- **Monorepo:** npm workspaces (no Turborepo/Nx).
+- **Backend (`apps/api`):** Express + `pg` (no ORM) + tsyringe (DI) + Zod + JWT + pdfkit.
 - **Frontend (`apps/web`):** React + Vite + TypeScript + React Query + react-router + Tailwind + react-hook-form.
-- **Contratos compartilhados (`packages/contracts`):** schemas Zod como única fonte de verdade para tipos e validação.
-- **Banco:** PostgreSQL com migrations SQL manuais (pares `up.sql` / `down.sql`) e runner próprio.
-- **Testes:** Vitest + supertest no backend (Postgres real via Testcontainers), Vitest + Testing Library + MSW no frontend. **100% de cobertura** (linhas, branches, funções, statements) é obrigatório.
+- **Shared contracts (`packages/contracts`):** Zod schemas as the single source of truth for types and validation.
+- **Database:** PostgreSQL with manual SQL migrations (paired `up.sql` / `down.sql`) and a custom runner.
+- **Tests:** Vitest + supertest on the backend (real Postgres via Testcontainers), Vitest + Testing Library + MSW on the frontend. **100% coverage** (lines, branches, functions, statements) is mandatory.
 
-Ver `plan.md` para schema, rotas REST, regras de DI e roadmap completo (Stages 0–10).
+UI strings are written directly in PT-BR in JSX — the project is monolingual and has no i18n layer. See `plan.md` for the full schema, REST surface, DI rules, and the Stage 0–10 roadmap.
 
-## Comandos (a serem implementados)
+## Commands (to be implemented)
 
-Os scripts abaixo serão wireados conforme cada stage avança. Hoje **nenhum existe**.
+The scripts below will be wired up as each stage lands. None exist today.
 
-| Comando | Função |
+| Command | Purpose |
 | --- | --- |
-| `npm run dev` (raiz) | Sobe API (`:3000`) e Web (`:5173`) |
-| `npm test` (raiz) | Backend + frontend com gate de 100% de cobertura |
-| `npm run lint` / `npm run typecheck` | Checks estáticos em todos os workspaces |
-| `npm run db:migrate -w apps/api` | Aplica migrations pendentes |
-| `npm run db:migrate:down -w apps/api` | Reverte a última migration aplicada |
-| `npm run db:migrate:status -w apps/api` | Mostra aplicadas vs pendentes |
-| `npm run db:seed -w apps/api` | Cria a fisioterapeuta a partir das envs |
-| `docker-compose up` | Sobe postgres + api + web para uso local |
+| `npm run dev` (root) | Start API (`:3000`) and Web (`:5173`) |
+| `npm test` (root) | Backend + frontend with the 100% coverage gate |
+| `npm run lint` / `npm run typecheck` | Static checks across workspaces |
+| `npm run db:migrate -w apps/api` | Apply pending migrations |
+| `npm run db:migrate:down -w apps/api` | Revert the last applied migration |
+| `npm run db:migrate:status -w apps/api` | Show applied vs pending migrations |
+| `npm run db:seed -w apps/api` | Seed the physiotherapist from env vars |
+| `docker-compose up` | Boot postgres + api + web for local use |
 
 ## Roadmap
 
-`plan.md` define **Stage 0 … Stage 10**. Cada stage é independentemente mergeável, deixa o app utilizável até seu escopo e precisa terminar com 100% de cobertura antes do próximo:
+`plan.md` defines **Stage 0 … Stage 10**. Each stage is independently mergeable, leaves the app usable up to its scope, and must end at 100% coverage before the next one starts:
 
-- **Stages 0–1:** bootstrap do monorepo, runner de migrations, auth, migration `0001_init`.
-- **Stages 2–5:** verticais da API — pacientes → schedule + geração de sessões → status + faturamento → PDF mensal.
-- **Stages 6–9:** verticais do frontend espelhando a ordem da API.
-- **Stage 10:** Dockerfiles, finalização do `docker-compose` e checklist de smoke manual.
+- **Stages 0–1:** monorepo bootstrap, migration runner, auth, `0001_init` migration.
+- **Stages 2–5:** API verticals — patients → schedule + session generation → status + billing → monthly PDF.
+- **Stages 6–9:** frontend verticals mirroring the API order.
+- **Stage 10:** Dockerfiles, `docker-compose` finalization, and a manual smoke checklist.
 
-## Licença
+## License
 
 [MIT](./LICENSE)
