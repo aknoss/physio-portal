@@ -247,6 +247,10 @@ PDFs and files go through `PdfRenderer` and `FileStorage` interfaces — impleme
 
 ## Testing strategy (backend 100%, frontend ≥ 80%)
 
+### Workflow: TDD
+- Every behavior change follows the red → green → refactor cycle: write the failing test first, watch it fail for the right reason, then write the minimum code that makes it pass, then refactor with the test as a safety net.
+- This applies to every layer (repositories, services, controllers, hooks, components, utils) and every stage below. No implementation lands without a test that failed before it and passes after.
+
 ### Backend
 - **Vitest** + **supertest**. Coverage via the `v8` provider, threshold 100% under `--coverage` (lines/branches/functions/statements).
 - Repositories tested against real Postgres in a test container (Testcontainers) — no mocks of the `pg` driver (rule: integration tests don't mock the DB).

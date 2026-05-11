@@ -40,6 +40,7 @@ packages/contracts     Zod schemas shared by api + web (single source of truth f
 
 ## Testing rules (non-negotiable)
 
+- **TDD is the default workflow.** Write the failing test first, watch it fail, then implement the minimum code to make it pass, then refactor. This applies to every behavior change — repositories, services, controllers, hooks, components, utils. Never push implementation code without a test that fails before it and passes after.
 - **Coverage gates** (lines, branches, functions, statements): **100%** on `apps/api`, **80%** on `apps/web`. CI fails below those thresholds.
 - Backend: Vitest + supertest. Repository tests run against a **real Postgres via Testcontainers** — never mock `pg.Pool` / `pg.Client`. Services are tested with in-memory fakes that implement the repository interfaces.
 - The Testcontainer setup must round-trip migrations: apply every `up.sql`, then verify each `down.sql` reverts cleanly (up → down → up).
