@@ -1,0 +1,12 @@
+{
+  "name": "@physio-portal/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'web dev server lands in Stage 6'",
+    "build": "echo 'web build lands in Stage 6'",
+    "test": "echo 'web test suite lands in Stage 6'",
+    "typecheck": "echo 'web typecheck lands in Stage 6'"
+  }
+}
