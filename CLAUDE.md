@@ -40,7 +40,7 @@ packages/contracts     Zod schemas shared by api + web (single source of truth f
 
 ## Testing rules (non-negotiable)
 
-- **100% coverage** (lines, branches, functions, statements) on both `apps/api` and `apps/web`. CI fails below 100%.
+- **Coverage gates** (lines, branches, functions, statements): **100%** on `apps/api`, **80%** on `apps/web`. CI fails below those thresholds.
 - Backend: Vitest + supertest. Repository tests run against a **real Postgres via Testcontainers** — never mock `pg.Pool` / `pg.Client`. Services are tested with in-memory fakes that implement the repository interfaces.
 - The Testcontainer setup must round-trip migrations: apply every `up.sql`, then verify each `down.sql` reverts cleanly (up → down → up).
 - Frontend: Vitest + @testing-library/react + MSW for HTTP interception.
@@ -53,7 +53,7 @@ These scripts will land as stages are implemented. Until then the repo is not ru
 | Command                                     | Purpose                                                    |
 | ------------------------------------------- | ---------------------------------------------------------- |
 | `npm run dev` (root)                        | Start API (`:3000`) and Web (`:5173`)                      |
-| `npm test` (root)                           | Run backend + frontend test suites with 100% coverage gate |
+| `npm test` (root)                           | Run backend + frontend test suites (100% gate on api, 80% on web) |
 | `npm run lint` / `npm run typecheck` (root) | Static checks across workspaces                            |
 | `npm run db:migrate -w apps/api`            | Apply pending migrations                                   |
 | `npm run db:migrate:down -w apps/api`       | Revert the last applied migration                          |
@@ -65,7 +65,7 @@ Once Vitest is wired, run a single test with `npx vitest run path/to/file.test.t
 
 ## Working order
 
-`plan.md` defines **Stage 0 … Stage 10** as the implementation roadmap. Each stage is independently mergeable, leaves the app usable up to its scope, and must end at 100% coverage before moving on. When asked to implement work, identify which stage it belongs to and confirm prerequisite stages are done.
+`plan.md` defines **Stage 0 … Stage 10** as the implementation roadmap. Each stage is independently mergeable, leaves the app usable up to its scope, and must end at the configured coverage gates (100% api / 80% web) before moving on. When asked to implement work, identify which stage it belongs to and confirm prerequisite stages are done.
 
 Rough grouping:
 

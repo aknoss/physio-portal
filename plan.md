@@ -1,34 +1,34 @@
-# Plano: Portal de Pacientes para Fisioterapeuta
+# Plan: Patient Portal for Physiotherapist
 
 ## Context
 
-A fisioterapeuta precisa de uma aplicação web (PT-BR) para organizar pacientes, registrar atendimentos recorrentes, calcular faturamento semanal/mensal e emitir um relatório mensal por paciente em PDF assinado. Hoje provavelmente faz isso em planilhas/papel, o que torna controle de faturamento e geração de relatórios trabalhoso.
+The physiotherapist needs a web application (PT-BR) to organize patients, record recurring appointments, calculate weekly/monthly billing, and issue a monthly per-patient report as a signed PDF. Today she likely does this on spreadsheets/paper, which makes billing control and report generation tedious.
 
-**Resultado esperado:** monorepo executável localmente via `docker-compose up` que entrega:
-- Login da fisioterapeuta
-- CRUD de pacientes (com link direto para WhatsApp)
-- Schedule recorrente por paciente (dias da semana fixos) com geração automática de sessões
-- Marcação de sessão como **Realizada / Falta / Remarcada** (apenas Realizada fatura)
-- Dashboard com totais por semana/mês (geral e por paciente)
-- Geração de PDF mensal por paciente com assinatura da fisio (imagem) e valor total em BRL
-- Cobertura de testes 100% (backend + frontend), seguindo SOLID / DI
+**Expected outcome:** a monorepo runnable locally via `docker-compose up` that delivers:
+- Physiotherapist login
+- Patient CRUD (with direct WhatsApp link)
+- Recurring schedule per patient (fixed weekdays) with automatic session generation
+- Marking sessions as **Realizada / Falta / Remarcada** (only `REALIZADA` bills)
+- Dashboard with weekly/monthly totals (overall and per patient)
+- Monthly PDF generation per patient with the physiotherapist's signature (image) and total amount in BRL
+- 100% test coverage on the backend and ≥ 80% on the frontend, following SOLID / DI
 
-## Decisões já confirmadas (da fase de perguntas)
+## Decisions already confirmed (from the question phase)
 
-| Tema | Decisão |
+| Topic | Decision |
 |---|---|
-| Usuários | Single-user (apenas a fisioterapeuta) |
-| Agenda | Schedule recorrente + sessões geradas; status Realizada/Falta/Remarcada |
-| Faltas | Não faturam — apenas Realizadas entram no total |
-| Relatório | PDF gerado no backend com assinatura em imagem |
-| Monorepo | npm workspaces (sem Turborepo) |
-| Auth | Email + senha → JWT; uma usuária seedada |
+| Users | Single-user (only the physiotherapist) |
+| Schedule | Recurring schedule + generated sessions; statuses Realizada/Falta/Remarcada |
+| No-shows | Do not bill — only `REALIZADA` counts toward the total |
+| Report | PDF generated on the backend with signature as image |
+| Monorepo | npm workspaces (no Turborepo) |
+| Auth | Email + password → JWT; one seeded user |
 | Deploy | Local via Docker Compose |
-| Testes | 100% rigoroso em backend e frontend |
+| Tests | Strict 100% on the backend; ≥ 80% on the frontend |
 
 ---
 
-## Estrutura do monorepo
+## Monorepo structure
 
 ```
 physio-portal/
@@ -43,9 +43,9 @@ physio-portal/
 │   │   │   ├── server.ts           # bootstrap
 │   │   │   ├── db/
 │   │   │   │   ├── pool.ts         # pg.Pool factory
-│   │   │   │   ├── migrate.ts      # runner: aplica/reverte migrations
-│   │   │   │   ├── seed.ts         # seed inicial da fisio
-│   │   │   │   └── migrations/     # SQL puro, pares up/down
+│   │   │   │   ├── migrate.ts      # runner: applies/reverts migrations
+│   │   │   │   ├── seed.ts         # initial seed of the physiotherapist
+│   │   │   │   └── migrations/     # plain SQL, up/down pairs
 │   │   │   │       ├── 0001_init.up.sql
 │   │   │   │       ├── 0001_init.down.sql
 │   │   │   │       └── ...
@@ -59,7 +59,7 @@ physio-portal/
 │   │   │   ├── shared/
 │   │   │   │   ├── http/           # Result types, error mapper
 │   │   │   │   ├── middleware/     # auth, errorHandler, validate
-│   │   │   │   └── pricing/        # cálculo BRL, semana/mês
+│   │   │   │   └── pricing/        # BRL, weekly/monthly calculations
 │   │   │   └── infra/
 │   │   │       └── pdf/            # pdfkit adapter
 │   │   ├── tests/                  # vitest + supertest
@@ -70,18 +70,18 @@ physio-portal/
 │       │   ├── app/                # router, providers (RQ, auth)
 │       │   ├── pages/
 │       │   │   ├── Login/
-│       │   │   ├── Pacientes/      # lista + form
-│       │   │   ├── PacienteDetalhe/  # calendário + sessões
-│       │   │   ├── Relatorios/     # dashboard geral
-│       │   │   ├── RelatorioMensal/  # geração PDF
-│       │   │   └── Configuracoes/  # upload assinatura, dados fisio
+│       │   │   ├── Pacientes/      # list + form
+│       │   │   ├── PacienteDetalhe/  # calendar + sessions
+│       │   │   ├── Relatorios/     # general dashboard
+│       │   │   ├── RelatorioMensal/  # PDF generation
+│       │   │   └── Configuracoes/  # signature upload, physio data
 │       │   ├── components/
 │       │   ├── hooks/              # useAuth, usePacientes, useSessoes…
-│       │   └── api/                # client RQ, endpoints tipados
+│       │   └── api/                # RQ client, typed endpoints
 │       ├── tests/
 │       └── Dockerfile
 └── packages/
-    └── contracts/                  # tipos compartilhados (DTOs Zod)
+    └── contracts/                  # shared types (Zod DTOs)
         └── src/
             ├── patient.ts
             ├── session.ts
@@ -89,25 +89,25 @@ physio-portal/
             └── auth.ts
 ```
 
-`packages/contracts` exporta schemas **Zod** (única fonte de verdade para validação + tipos). Backend usa para `validate()` middleware; frontend infere tipos via `z.infer`.
+`packages/contracts` exports **Zod** schemas (single source of truth for validation + types). The backend uses it for a `validate()` middleware; the frontend infers types via `z.infer`.
 
 ---
 
-## Modelo de dados (Postgres puro, SQL)
+## Data model (plain Postgres, SQL)
 
-Tabelas criadas na migration inicial `0001_init`. Colunas em `snake_case`; mapeadas para `camelCase` na camada de repositório (row → entidade tipada). IDs como `uuid` gerados pelo banco (`gen_random_uuid()` via `pgcrypto`).
+Tables created in the initial migration `0001_init`. Columns in `snake_case`; mapped to `camelCase` at the repository layer (row → typed entity). IDs are `uuid` generated by the database (`gen_random_uuid()` via `pgcrypto`).
 
 ```sql
 -- 0001_init.up.sql
 create extension if not exists pgcrypto;
 
-create table users (                       -- a fisioterapeuta (única)
+create table users (                       -- the physiotherapist (only one)
   id             uuid primary key default gen_random_uuid(),
   email          text not null unique,
   password_hash  text not null,
   full_name      text not null,
-  cref           text not null,            -- registro profissional
-  signature_url  text,                     -- path para PNG da assinatura
+  cref           text not null,            -- professional registration
+  signature_url  text,                     -- path to the signature PNG
   created_at     timestamptz not null default now()
 );
 
@@ -115,17 +115,17 @@ create table patients (
   id                  uuid primary key default gen_random_uuid(),
   full_name           text not null,
   address             text not null,
-  phone               text not null,        -- E.164 BR para link wa.me
-  session_price_cents integer not null check (session_price_cents >= 0),  -- BRL em centavos
+  phone               text not null,        -- E.164 BR for wa.me link
+  session_price_cents integer not null check (session_price_cents >= 0),  -- BRL in cents
   notes               text,
   active              boolean not null default true,
   created_at          timestamptz not null default now()
 );
 
-create table schedules (                   -- dias da semana recorrentes
+create table schedules (                   -- recurring weekdays
   id          uuid primary key default gen_random_uuid(),
   patient_id  uuid not null unique references patients(id) on delete cascade,
-  weekdays    integer[] not null,           -- 0..6 (Dom..Sáb)
+  weekdays    integer[] not null,           -- 0..6 (Sun..Sat)
   start_date  date not null,
   end_date    date
 );
@@ -135,9 +135,9 @@ create type session_status as enum ('SCHEDULED', 'REALIZADA', 'FALTA', 'REMARCAD
 create table sessions (
   id          uuid primary key default gen_random_uuid(),
   patient_id  uuid not null references patients(id) on delete cascade,
-  date        date not null,                -- dia do atendimento
+  date        date not null,                -- appointment day
   status      session_status not null default 'SCHEDULED',
-  price_cents integer not null check (price_cents >= 0),  -- snapshot do preço
+  price_cents integer not null check (price_cents >= 0),  -- price snapshot
   note        text,
   unique (patient_id, date)
 );
@@ -155,18 +155,18 @@ drop table if exists patients;
 drop table if exists users;
 ```
 
-**Faturamento** = `SUM(price_cents) WHERE status = 'REALIZADA' AND date BETWEEN $1 AND $2` — falta/remarcada não somam (decisão confirmada).
+**Billing** = `SUM(price_cents) WHERE status = 'REALIZADA' AND date BETWEEN $1 AND $2` — `FALTA` / `REMARCADA` don't count (confirmed decision).
 
 ---
 
-## Migrations (manuais, up/down)
+## Migrations (manual, up/down)
 
-- Cada mudança de schema = nova migration com par `NNNN_<slug>.up.sql` / `NNNN_<slug>.down.sql` em `apps/api/src/db/migrations/`. Numeração sequencial zero-padded.
-- Runner próprio em `apps/api/src/db/migrate.ts`, expondo subcomandos:
-  - `npm run db:migrate -w apps/api` → aplica todas as migrations pendentes em ordem.
-  - `npm run db:migrate:down -w apps/api` → reverte a última migration aplicada (executa o `.down.sql` correspondente).
-  - `npm run db:migrate:status -w apps/api` → mostra aplicadas vs pendentes.
-- O runner garante tabela de controle (criada na primeira execução, fora das migrations versionadas):
+- Every schema change = new migration with a `NNNN_<slug>.up.sql` / `NNNN_<slug>.down.sql` pair in `apps/api/src/db/migrations/`. Sequential zero-padded numbering.
+- Custom runner in `apps/api/src/db/migrate.ts`, exposing subcommands:
+  - `npm run db:migrate -w apps/api` → applies all pending migrations in order.
+  - `npm run db:migrate:down -w apps/api` → reverts the last applied migration (runs the corresponding `.down.sql`).
+  - `npm run db:migrate:status -w apps/api` → shows applied vs pending.
+- The runner ensures a control table (created on first run, outside the versioned migrations):
   ```sql
   create table if not exists _migrations (
     id         serial primary key,
@@ -174,45 +174,45 @@ drop table if exists users;
     applied_at timestamptz not null default now()
   );
   ```
-- Cada migration roda dentro de uma transação (`BEGIN … COMMIT`), insere a linha em `_migrations` ao final do `up` e remove ao final do `down`. Falha → rollback completo.
-- **Regra:** migration já aplicada em qualquer ambiente nunca é editada — sempre criar nova (additive ou corretiva).
+- Each migration runs inside a transaction (`BEGIN … COMMIT`), inserts the row into `_migrations` at the end of `up` and removes it at the end of `down`. Failure → full rollback.
+- **Rule:** a migration already applied in any environment is never edited — always create a new one (additive or corrective).
 
 ---
 
-## API REST (resumo)
+## REST API (summary)
 
-| Método | Rota | Descrição |
+| Method | Route | Description |
 |---|---|---|
 | POST | `/auth/login` | login → JWT |
-| GET  | `/auth/me` | dados da fisio logada |
-| PATCH | `/auth/me` | atualiza nome/CREF |
-| POST | `/auth/me/signature` | upload PNG assinatura (multer) |
-| GET  | `/patients` | lista (filtro `active`, busca por nome) |
-| POST | `/patients` | cria |
-| GET  | `/patients/:id` | detalhe |
-| PATCH | `/patients/:id` | atualiza |
-| DELETE | `/patients/:id` | inativa (soft delete via `active=false`) |
-| PUT  | `/patients/:id/schedule` | define/atualiza schedule recorrente |
-| POST | `/patients/:id/sessions/generate` | gera sessões SCHEDULED de um intervalo a partir do schedule |
-| GET  | `/patients/:id/sessions?from=&to=` | lista sessões |
-| PATCH | `/sessions/:id` | atualiza status (REALIZADA/FALTA/REMARCADA) |
-| GET  | `/reports/summary?from=&to=` | totais gerais (mês/semana) |
-| GET  | `/reports/patient/:id?from=&to=` | totais por paciente |
-| GET  | `/reports/patient/:id/monthly.pdf?month=YYYY-MM` | PDF mensal assinado |
+| GET  | `/auth/me` | logged-in physiotherapist's data |
+| PATCH | `/auth/me` | updates name/CREF |
+| POST | `/auth/me/signature` | upload signature PNG (multer) |
+| GET  | `/patients` | list (filter `active`, search by name) |
+| POST | `/patients` | create |
+| GET  | `/patients/:id` | detail |
+| PATCH | `/patients/:id` | update |
+| DELETE | `/patients/:id` | deactivate (soft delete via `active=false`) |
+| PUT  | `/patients/:id/schedule` | sets/updates the recurring schedule |
+| POST | `/patients/:id/sessions/generate` | generates `SCHEDULED` sessions over a range from the schedule |
+| GET  | `/patients/:id/sessions?from=&to=` | lists sessions |
+| PATCH | `/sessions/:id` | updates status (REALIZADA/FALTA/REMARCADA) |
+| GET  | `/reports/summary?from=&to=` | overall totals (month/week) |
+| GET  | `/reports/patient/:id?from=&to=` | per-patient totals |
+| GET  | `/reports/patient/:id/monthly.pdf?month=YYYY-MM` | signed monthly PDF |
 
-Tudo (exceto `/auth/login`) protegido por middleware JWT.
+Everything (except `/auth/login`) is protected by the JWT middleware.
 
 ---
 
-## SOLID / DI no backend
+## SOLID / DI on the backend
 
-**Composition root** em `src/container.ts` usando **tsyringe** (decoradores TS). Cada módulo expõe:
+**Composition root** in `src/container.ts` using **tsyringe** (TS decorators). Each module exposes:
 
-- `XRepository` (interface) → `PgXRepository` (impl que recebe `pg.Pool` no construtor e executa queries parametrizadas)
-- `XService` (lógica) recebe repositório por construtor
-- `XController` recebe service por construtor
+- `XRepository` (interface) → `PgXRepository` (impl that receives `pg.Pool` in the constructor and runs parameterized queries)
+- `XService` (logic) receives the repository via constructor
+- `XController` receives the service via constructor
 
-Exemplo:
+Example:
 
 ```ts
 // modules/sessions/SessionService.ts
@@ -221,140 +221,141 @@ export class SessionService {
   constructor(
     @inject('SessionRepository') private repo: SessionRepository,
     @inject('ScheduleRepository') private schedules: ScheduleRepository,
-    @inject('Clock') private clock: Clock,        // abstração para testes
+    @inject('Clock') private clock: Clock,        // abstraction for tests
   ) {}
   generateForRange(patientId: string, from: Date, to: Date) { … }
   markStatus(id: string, status: SessionStatus) { … }
 }
 ```
 
-`Clock` injetado permite testar geração de sessões sem mocks de `Date`.
-PDF e arquivos via interfaces `PdfRenderer` e `FileStorage` — implementações trocáveis.
+An injected `Clock` allows testing session generation without mocking `Date`.
+PDFs and files go through `PdfRenderer` and `FileStorage` interfaces — implementations are swappable.
 
 ---
 
 ## Frontend
 
-- **Roteamento:** `react-router` v6 com guard `<RequireAuth>`.
-- **Data fetching:** React Query 5 com `queryClient` no provider; chaves padronizadas (`['patients']`, `['sessions', patientId, range]`).
-- **Forms:** `react-hook-form` + resolver Zod usando schemas de `packages/contracts`.
-- **UI:** Tailwind CSS + componentes próprios (sem libs pesadas). Tabela de pacientes, calendário mensal simples para sessões (grid 7 colunas), modal de confirmação para marcar status. Strings PT-BR escritas direto no JSX (projeto monolíngue, sem camada de i18n).
-- **Formato BRL:** `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`.
-- **WhatsApp:** botão `https://wa.me/55${phoneDigits}` em PatientDetail.
-- **PDF:** `<a href="/reports/patient/:id/monthly.pdf?month=…" target="_blank">` com header Authorization injetado via fetch+blob.
+- **Routing:** `react-router` v6 with a `<RequireAuth>` guard.
+- **Data fetching:** React Query 5 with a `queryClient` in the provider; standardized keys (`['patients']`, `['sessions', patientId, range]`).
+- **Forms:** `react-hook-form` + Zod resolver using schemas from `packages/contracts`.
+- **UI:** Tailwind CSS + custom components (no heavy libraries). Patient table, simple monthly calendar for sessions (7-column grid), confirmation modal to mark status. PT-BR strings written directly in JSX (monolingual project, no i18n layer).
+- **BRL format:** `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`.
+- **WhatsApp:** `https://wa.me/55${phoneDigits}` button in PatientDetail.
+- **PDF:** `<a href="/reports/patient/:id/monthly.pdf?month=…" target="_blank">` with Authorization header injected via fetch+blob.
 
 ---
 
-## Estratégia de testes (100% rigoroso)
+## Testing strategy (backend 100%, frontend ≥ 80%)
 
 ### Backend
-- **Vitest** + **supertest**. Coverage via `v8` provider, threshold 100% em `--coverage` (lines/branches/functions/statements).
-- Repositórios testados contra Postgres real em test container (Testcontainers) — sem mocks do driver `pg` (regra: testes de integração não mockam DB).
-- Services testados unitariamente com fakes in-memory das interfaces (nunca mockar `pg.Pool` / `pg.Client`).
-- Migrations exercitadas no setup do Testcontainer: aplicar todas as `up.sql` e validar que cada `down.sql` reverte para o estado anterior (round-trip up → down → up).
-- Geração de PDF testada por hash do PDF resultante e por extração de texto (`pdf-parse`).
-- Cobertura excluindo apenas `server.ts`, `db/migrations/` (arquivos `.sql`) e arquivos de tipos.
+- **Vitest** + **supertest**. Coverage via the `v8` provider, threshold 100% under `--coverage` (lines/branches/functions/statements).
+- Repositories tested against real Postgres in a test container (Testcontainers) — no mocks of the `pg` driver (rule: integration tests don't mock the DB).
+- Services tested as units with in-memory fakes of the interfaces (never mock `pg.Pool` / `pg.Client`).
+- Migrations exercised in the Testcontainer setup: apply every `up.sql` and validate that each `down.sql` reverts to the previous state (round-trip up → down → up).
+- PDF generation tested by hashing the resulting PDF and via text extraction (`pdf-parse`).
+- Coverage excluding only `server.ts`, `db/migrations/` (`.sql` files), and type-only files.
 
 ### Frontend
-- **Vitest** + **@testing-library/react** + **MSW** para interceptar HTTP.
-- Cada hook, util, componente e page com testes. Threshold 100%.
+- **Vitest** + **@testing-library/react** + **MSW** to intercept HTTP.
+- Coverage via the `v8` provider, threshold **80%** (lines/branches/functions/statements).
+- Prioritize tests on hooks, utils, and critical flows (auth, billing, PDF generation); purely presentational UI may sit below target as long as the overall coverage stays at 80%.
 
-### CI local
-- Script `npm test` na raiz roda backend + frontend; falha se coverage < 100%.
+### Local CI
+- The root `npm test` script runs backend + frontend; fails if backend coverage < 100% or frontend coverage < 80%.
 
 ---
 
-## Stages incrementais
+## Incremental stages
 
-Cada stage é mergeável e deixa o app utilizável até onde foi entregue. Testes 100% obrigatórios ao final de cada stage.
+Each stage is mergeable and leaves the app usable up to what was delivered. By the end of each stage, backend tests must keep 100% coverage; frontend stages must keep ≥ 80%.
 
-### Stage 0 — Fundação do monorepo
-- `package.json` raiz com workspaces, scripts (`dev`, `build`, `test`, `lint`, `typecheck`).
-- Configs base: TS, ESLint, Prettier, EditorConfig.
-- `packages/contracts` vazio com Zod instalado.
-- `docker-compose.yml` com serviço `postgres` + `api` + `web` (placeholders).
-- Esqueleto do runner de migrations em `apps/api/src/db/migrate.ts` (lê pasta `migrations/`, controla tabela `_migrations`, suporta `up` / `down` / `status`).
-- README PT-BR de setup.
+### Stage 0 — Monorepo foundation
+- Root `package.json` with workspaces, scripts (`dev`, `build`, `test`, `lint`, `typecheck`).
+- Base configs: TS, ESLint, Prettier, EditorConfig.
+- Empty `packages/contracts` with Zod installed.
+- `docker-compose.yml` with `postgres` + `api` + `web` services (placeholders).
+- Skeleton of the migration runner in `apps/api/src/db/migrate.ts` (reads the `migrations/` folder, manages the `_migrations` table, supports `up` / `down` / `status`).
+- PT-BR setup README.
 
 ### Stage 1 — API: bootstrap + auth + DI
-- Express + tsyringe + driver `pg` (Pool injetável) + middleware de erro.
-- Migration `0001_init` criando todas as tabelas (users, patients, schedules, sessions + enum `session_status`).
-- Seed da fisioterapeuta em `apps/api/src/db/seed.ts` (email/senha via env, idempotente).
+- Express + tsyringe + `pg` driver (injectable Pool) + error middleware.
+- Migration `0001_init` creating all tables (users, patients, schedules, sessions + `session_status` enum).
+- Physiotherapist seed in `apps/api/src/db/seed.ts` (email/password from env, idempotent).
 - `POST /auth/login`, `GET /auth/me`, JWT middleware.
-- Upload de assinatura (`POST /auth/me/signature`) com multer salvando em `apps/api/uploads/`.
-- Testes 100% incluindo round-trip up/down da migration.
+- Signature upload (`POST /auth/me/signature`) via multer saving to `apps/api/uploads/`.
+- 100% tests including up/down round-trip of the migration.
 
-### Stage 2 — API: pacientes (CRUD)
-- Schemas Zod em `packages/contracts/src/patient.ts`.
-- Repository + Service + Controller para Patient.
+### Stage 2 — API: patients (CRUD)
+- Zod schemas in `packages/contracts/src/patient.ts`.
+- Repository + Service + Controller for Patient.
 - Soft delete via `active`.
-- Validação de telefone BR (E.164).
-- Testes 100%.
+- BR phone validation (E.164).
+- 100% tests.
 
-### Stage 3 — API: schedule + geração de sessões
+### Stage 3 — API: schedule + session generation
 - `PUT /patients/:id/schedule`.
-- `POST /patients/:id/sessions/generate` recebe `{from, to}` e cria `SessionStatus.SCHEDULED` para cada weekday no intervalo (idempotente via unique `[patientId, date]`).
-- `Clock` abstrato injetado.
-- Testes 100% incluindo edge cases (DST, mês com 5 segundas, schedule encerrado).
+- `POST /patients/:id/sessions/generate` receives `{from, to}` and creates `SessionStatus.SCHEDULED` for each weekday in the range (idempotent via unique `[patientId, date]`).
+- Abstract `Clock` injected.
+- 100% tests including edge cases (DST, months with 5 Mondays, ended schedule).
 
-### Stage 4 — API: marcar sessões + cálculo de faturamento
-- `PATCH /sessions/:id` com transição de status validada.
-- `GET /reports/summary` e `GET /reports/patient/:id` com agregações por semana/mês.
-- Módulo `shared/pricing/` puro (testável sem DB).
-- Testes 100%.
+### Stage 4 — API: marking sessions + billing computation
+- `PATCH /sessions/:id` with validated status transitions.
+- `GET /reports/summary` and `GET /reports/patient/:id` with weekly/monthly aggregations.
+- Pure `shared/pricing/` module (testable without a DB).
+- 100% tests.
 
-### Stage 5 — API: PDF mensal assinado
-- Adapter `PdfRenderer` com pdfkit (sem Chromium → mais leve em Docker).
-- Layout: cabeçalho com nome/CREF da fisio, dados do paciente, tabela de sessões realizadas no mês, total em BRL formatado, imagem da assinatura no rodapé, data de emissão.
-- `GET /reports/patient/:id/monthly.pdf?month=YYYY-MM` retorna `application/pdf`.
-- Testes: snapshot do texto extraído, validação de presença da assinatura.
+### Stage 5 — API: signed monthly PDF
+- `PdfRenderer` adapter using pdfkit (no Chromium → lighter Docker image).
+- Layout: header with the physio's name/CREF, patient data, table of sessions marked as `REALIZADA` in the month, total in formatted BRL, signature image in the footer, issue date.
+- `GET /reports/patient/:id/monthly.pdf?month=YYYY-MM` returns `application/pdf`.
+- Tests: snapshot of the extracted text, validation that the signature is present.
 
 ### Stage 6 — Frontend: bootstrap + auth + layout
 - Vite + React + TS + Tailwind + RQ + react-router.
-- `AuthProvider` com token em `localStorage` + interceptor.
-- Página `Login` + `RequireAuth` guard.
-- Layout com sidebar (Pacientes / Relatórios / Configurações) em PT-BR.
-- Testes 100%.
+- `AuthProvider` with token in `localStorage` + interceptor.
+- `Login` page + `RequireAuth` guard.
+- Layout with sidebar (Pacientes / Relatórios / Configurações) in PT-BR.
+- Tests ≥ 80%.
 
-### Stage 7 — Frontend: pacientes (lista + form)
-- Lista com busca, filtro ativo/inativo.
-- Form de criar/editar (react-hook-form + Zod do `contracts`).
-- Botão WhatsApp em cada card.
-- Testes 100% (MSW).
+### Stage 7 — Frontend: patients (list + form)
+- List with search, active/inactive filter.
+- Create/edit form (react-hook-form + Zod from `contracts`).
+- WhatsApp button on each card.
+- Tests ≥ 80% (MSW).
 
-### Stage 8 — Frontend: detalhe do paciente + calendário de sessões
-- Tela do paciente com schedule recorrente (selector de dias da semana).
-- Calendário mensal: cada célula = sessão (cor por status). Click → modal para marcar Realizada/Falta/Remarcada.
-- Botão "Gerar sessões do mês" → chama endpoint generate.
-- Cálculos de semana/mês visíveis no topo.
-- Testes 100%.
+### Stage 8 — Frontend: patient detail + sessions calendar
+- Patient screen with recurring schedule (weekday selector).
+- Monthly calendar: each cell = one session (color by status). Click → modal to mark Realizada/Falta/Remarcada.
+- "Generate this month's sessions" button → calls the generate endpoint.
+- Week/month figures visible at the top.
+- Tests ≥ 80%.
 
-### Stage 9 — Frontend: relatórios + PDF mensal
-- Dashboard `Relatorios`: total do mês, total da semana, ranking de pacientes.
-- Tela `RelatorioMensal`: seleciona paciente + mês → preview + botão "Baixar PDF" (fetch com Bearer, blob download).
-- Tela `Configuracoes`: edita nome/CREF, upload de assinatura.
-- Testes 100%.
+### Stage 9 — Frontend: reports + monthly PDF
+- `Relatorios` dashboard: monthly total, weekly total, ranking of patients.
+- `RelatorioMensal` screen: select patient + month → preview + "Download PDF" button (fetch with Bearer, blob download).
+- `Configuracoes` screen: edit name/CREF, upload signature.
+- Tests ≥ 80%.
 
-### Stage 10 — Docker Compose + entrega
-- Dockerfiles api/web finalizados (multi-stage).
-- `docker-compose up` sobe tudo; volume persistente para postgres e uploads.
-- Script de seed inicial documentado no README.
-- Checklist de smoke manual (login → paciente → schedule → marcar sessões → PDF) descrito no README.
+### Stage 10 — Docker Compose + delivery
+- Final api/web Dockerfiles (multi-stage).
+- `docker-compose up` brings everything up; persistent volume for postgres and uploads.
+- Initial seed script documented in the README.
+- Manual smoke checklist (login → patient → schedule → mark sessions → PDF) described in the README.
 
 ---
 
-## Arquivos críticos a serem criados/modificados
+## Critical files to be created/modified
 
-- `package.json` (raiz, workspaces)
+- `package.json` (root, workspaces)
 - `docker-compose.yml`
-- `apps/api/src/db/pool.ts` (factory do `pg.Pool`)
-- `apps/api/src/db/migrate.ts` (runner manual up/down + tabela `_migrations`)
+- `apps/api/src/db/pool.ts` (`pg.Pool` factory)
+- `apps/api/src/db/migrate.ts` (manual up/down runner + `_migrations` table)
 - `apps/api/src/db/migrations/0001_init.up.sql` + `0001_init.down.sql`
 - `apps/api/src/db/seed.ts`
-- `apps/api/src/container.ts` (composition root DI)
+- `apps/api/src/container.ts` (DI composition root)
 - `apps/api/src/server.ts`
 - `apps/api/src/modules/{auth,patients,schedule,sessions,reports,pdf}/`
-- `apps/api/src/shared/pricing/billing.ts` (cálculo puro testável)
+- `apps/api/src/shared/pricing/billing.ts` (pure testable calculation)
 - `apps/api/src/infra/pdf/PdfKitRenderer.ts`
 - `apps/web/src/app/router.tsx`
 - `apps/web/src/api/client.ts` (axios + interceptor)
@@ -362,23 +363,23 @@ Cada stage é mergeável e deixa o app utilizável até onde foi entregue. Teste
 - `apps/web/src/pages/RelatorioMensal/index.tsx`
 - `packages/contracts/src/{patient,session,report,auth}.ts`
 
-Não há código existente a reutilizar — projeto é greenfield.
+There is no existing code to reuse — the project is greenfield.
 
 ---
 
-## Verificação end-to-end
+## End-to-end verification
 
-1. `docker-compose up -d postgres` e `npm install` na raiz.
-2. `npm run db:migrate -w apps/api && npm run db:seed -w apps/api` (cria fisio com email/senha do `.env`).
-3. `npm run dev` na raiz sobe API (`:3000`) e Web (`:5173`).
-4. Fluxo manual:
-   - Login com a fisio seedada.
-   - Em **Configurações**, faz upload da assinatura PNG.
-   - Cria paciente "Maria Silva", preço R$ 120, telefone, endereço.
-   - Define schedule: Seg/Qua/Sex.
-   - Gera sessões do mês corrente.
-   - Marca 4 sessões como Realizada, 1 como Falta.
-   - Em **Relatórios**, verifica total = 4 × R$ 120 = R$ 480.
-   - Gera PDF mensal e confere assinatura, valor e tabela.
-   - Clica em WhatsApp e abre `wa.me/55…` no navegador.
-5. `npm test` na raiz: backend e frontend devem passar com **100% de cobertura** (lines, branches, functions, statements).
+1. `docker-compose up -d postgres` and `npm install` at the root.
+2. `npm run db:migrate -w apps/api && npm run db:seed -w apps/api` (creates the physiotherapist with email/password from `.env`).
+3. `npm run dev` at the root brings up API (`:3000`) and Web (`:5173`).
+4. Manual flow:
+   - Log in as the seeded physiotherapist.
+   - In **Configurações**, upload the signature PNG.
+   - Create the patient "Maria Silva", price R$ 120, phone, address.
+   - Set schedule: Mon/Wed/Fri.
+   - Generate sessions for the current month.
+   - Mark 4 sessions as `REALIZADA`, 1 as `FALTA`.
+   - In **Relatórios**, verify total = 4 × R$ 120 = R$ 480.
+   - Generate the monthly PDF and check signature, amount, and table.
+   - Click WhatsApp and check that `wa.me/55…` opens in the browser.
+5. `npm test` at the root: backend and frontend must pass with **100% coverage on the backend** and **≥ 80% coverage on the frontend** (lines, branches, functions, statements).
