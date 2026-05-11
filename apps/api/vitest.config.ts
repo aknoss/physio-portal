@@ -12,8 +12,16 @@ export default defineConfig({
       exclude: [
         'src/server.ts',
         'src/db/migrate-cli.ts',
+        'src/db/seed-cli.ts',
         'src/db/migrations/**',
         'src/**/*.d.ts',
+        // type-only interface files (no runtime code) — listed in plan exclusions
+        'src/shared/clock/Clock.ts',
+        'src/shared/crypto/PasswordHasher.ts',
+        'src/shared/storage/FileStorage.ts',
+        'src/shared/tokens/TokenSigner.ts',
+        'src/modules/auth/User.ts',
+        'src/modules/auth/UserRepository.ts',
       ],
       thresholds: {
         statements: 100,

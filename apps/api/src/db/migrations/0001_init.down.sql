@@ -1,0 +1,6 @@
+DROP INDEX IF EXISTS sessions_date_idx;
+DROP TABLE IF EXISTS sessions;
+DROP TYPE  IF EXISTS session_status;
+DROP TABLE IF EXISTS schedules;
+DROP TABLE IF EXISTS patients;
+DROP TABLE IF EXISTS users;
