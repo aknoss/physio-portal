@@ -9,6 +9,13 @@ import type {
   UpdateProfileInput,
   UserRepository,
 } from '../../src/modules/auth/UserRepository.js';
+import type { Patient } from '../../src/modules/patients/Patient.js';
+import type {
+  CreatePatientInput,
+  ListPatientsFilter,
+  PatientRepository,
+  UpdatePatientInput,
+} from '../../src/modules/patients/PatientRepository.js';
 
 export class InMemoryUserRepository implements UserRepository {
   private readonly rows: User[] = [];
@@ -49,6 +56,63 @@ export class InMemoryUserRepository implements UserRepository {
     const row = this.rows.find((u) => u.id === id);
     if (!row) return null;
     row.signatureUrl = url;
+    return { ...row };
+  }
+}
+
+export class InMemoryPatientRepository implements PatientRepository {
+  private readonly rows: Patient[] = [];
+
+  async create(input: CreatePatientInput): Promise<Patient> {
+    const patient: Patient = {
+      id: randomUUID(),
+      fullName: input.fullName,
+      address: input.address,
+      phone: input.phone,
+      sessionPriceCents: input.sessionPriceCents,
+      notes: input.notes,
+      active: true,
+      createdAt: new Date(),
+    };
+    this.rows.push(patient);
+    return { ...patient };
+  }
+
+  async findById(id: string): Promise<Patient | null> {
+    const found = this.rows.find((p) => p.id === id);
+    return found ? { ...found } : null;
+  }
+
+  async list(filter: ListPatientsFilter): Promise<Patient[]> {
+    let result = [...this.rows];
+    if (filter.active !== undefined) {
+      result = result.filter((p) => p.active === filter.active);
+    }
+    if (filter.search !== undefined) {
+      const needle = filter.search.toLowerCase();
+      result = result.filter((p) => p.fullName.toLowerCase().includes(needle));
+    }
+    return result
+      .sort((a, b) => a.fullName.localeCompare(b.fullName))
+      .map((p) => ({ ...p }));
+  }
+
+  async update(id: string, input: UpdatePatientInput): Promise<Patient | null> {
+    const row = this.rows.find((p) => p.id === id);
+    if (!row) return null;
+    if (input.fullName !== undefined) row.fullName = input.fullName;
+    if (input.address !== undefined) row.address = input.address;
+    if (input.phone !== undefined) row.phone = input.phone;
+    if (input.sessionPriceCents !== undefined) row.sessionPriceCents = input.sessionPriceCents;
+    if (input.notes !== undefined) row.notes = input.notes;
+    if (input.active !== undefined) row.active = input.active;
+    return { ...row };
+  }
+
+  async deactivate(id: string): Promise<Patient | null> {
+    const row = this.rows.find((p) => p.id === id);
+    if (!row) return null;
+    row.active = false;
     return { ...row };
   }
 }

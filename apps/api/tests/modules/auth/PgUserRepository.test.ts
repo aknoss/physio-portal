@@ -22,7 +22,7 @@ beforeEach(async () => {
 const sample = {
   email: 'fisio@example.com',
   passwordHash: 'hashed',
-  fullName: 'Dra. Maria',
+  fullName: 'Dra. Raiany',
   cref: 'CREFITO-99999',
 };
 
@@ -61,10 +61,10 @@ describe('PgUserRepository', () => {
   it('updateProfile updates fullName and cref, returning the updated user', async () => {
     const created = await repo.create(sample);
     const updated = await repo.updateProfile(created.id, {
-      fullName: 'Dra. Maria Silva',
+      fullName: 'Dra. Raiany Silva',
       cref: 'CREFITO-99999-RJ',
     });
-    expect(updated?.fullName).toBe('Dra. Maria Silva');
+    expect(updated?.fullName).toBe('Dra. Raiany Silva');
     expect(updated?.cref).toBe('CREFITO-99999-RJ');
     expect(updated?.email).toBe(sample.email);
   });

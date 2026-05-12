@@ -38,7 +38,7 @@ beforeEach(async () => {
   await fixture.pool.query('TRUNCATE users CASCADE');
   await fixture.pool.query(
     `INSERT INTO users (email, password_hash, full_name, cref) VALUES ($1, $2, $3, $4)`,
-    ['fisio@example.com', passwordHash, 'Dra. Maria', 'CREFITO-99999'],
+    ['fisio@example.com', passwordHash, 'Dra. Raiany', 'CREFITO-99999'],
   );
 });
 
@@ -106,9 +106,9 @@ describe('PATCH /auth/me', () => {
     const res = await request(app)
       .patch('/auth/me')
       .set('Authorization', `Bearer ${token}`)
-      .send({ fullName: 'Dra. Maria Silva', cref: 'CREFITO-99999-RJ' });
+      .send({ fullName: 'Dra. Raiany Silva', cref: 'CREFITO-99999-RJ' });
     expect(res.status).toBe(200);
-    expect(res.body.fullName).toBe('Dra. Maria Silva');
+    expect(res.body.fullName).toBe('Dra. Raiany Silva');
     expect(res.body.cref).toBe('CREFITO-99999-RJ');
   });
 

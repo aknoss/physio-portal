@@ -22,6 +22,8 @@ export default defineConfig({
         'src/shared/tokens/TokenSigner.ts',
         'src/modules/auth/User.ts',
         'src/modules/auth/UserRepository.ts',
+        'src/modules/patients/Patient.ts',
+        'src/modules/patients/PatientRepository.ts',
       ],
       thresholds: {
         statements: 100,

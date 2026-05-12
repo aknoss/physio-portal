@@ -379,7 +379,7 @@ There is no existing code to reuse — the project is greenfield.
 4. Manual flow:
    - Log in as the seeded physiotherapist.
    - In **Configurações**, upload the signature PNG.
-   - Create the patient "Maria Silva", price R$ 120, phone, address.
+   - Create the patient "Raiany Silva", price R$ 120, phone, address.
    - Set schedule: Mon/Wed/Fri.
    - Generate sessions for the current month.
    - Mark 4 sessions as `REALIZADA`, 1 as `FALTA`.
