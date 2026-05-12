@@ -29,6 +29,13 @@ export const PatientReportDto = z.object({
   sessionCount: z.number().int().nonnegative(),
 });
 
+export const MonthlyReportQuery = z.object({
+  month: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'month must be in YYYY-MM format'),
+});
+
 export type ReportRangeQuery = z.infer<typeof ReportRangeQuery>;
 export type ReportSummaryDto = z.infer<typeof ReportSummaryDto>;
 export type PatientReportDto = z.infer<typeof PatientReportDto>;
+export type MonthlyReportQuery = z.infer<typeof MonthlyReportQuery>;

@@ -29,6 +29,7 @@ export default defineConfig({
         'src/modules/sessions/Session.ts',
         'src/modules/sessions/SessionRepository.ts',
         'src/modules/reports/ReportRepository.ts',
+        'src/infra/pdf/PdfRenderer.ts',
       ],
       thresholds: {
         statements: 100,

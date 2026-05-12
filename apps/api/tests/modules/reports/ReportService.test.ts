@@ -2,9 +2,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { NotFoundError } from '../../../src/shared/http/HttpError.js';
 import { ReportService } from '../../../src/modules/reports/ReportService.js';
 import {
+  FakeFileStorage,
+  FixedClock,
   InMemoryPatientRepository,
   InMemoryReportRepository,
+  InMemorySessionRepository,
+  InMemoryUserRepository,
 } from '../../helpers/fakes.js';
+import type { PdfRenderer, MonthlyReportInput } from '../../../src/infra/pdf/PdfRenderer.js';
 
 const samplePatient = {
   fullName: 'Raiany Silva',
@@ -16,12 +21,41 @@ const samplePatient = {
 
 let patients: InMemoryPatientRepository;
 let reports: InMemoryReportRepository;
+let users: InMemoryUserRepository;
+let sessions: InMemorySessionRepository;
+let storage: FakeFileStorage;
+let clock: FixedClock;
+let pdf: PdfRenderer & { calls: MonthlyReportInput[] };
 let service: ReportService;
+let physioUserId: string;
 
-beforeEach(() => {
+function makeFakePdfRenderer(): PdfRenderer & { calls: MonthlyReportInput[] } {
+  const calls: MonthlyReportInput[] = [];
+  return {
+    calls,
+    async renderMonthlyReport(input) {
+      calls.push(input);
+      return Buffer.from(`pdf:${input.month}`);
+    },
+  };
+}
+
+beforeEach(async () => {
   patients = new InMemoryPatientRepository();
   reports = new InMemoryReportRepository();
-  service = new ReportService(reports, patients);
+  users = new InMemoryUserRepository();
+  sessions = new InMemorySessionRepository();
+  storage = new FakeFileStorage();
+  clock = new FixedClock(new Date(Date.UTC(2026, 3, 1, 12, 0, 0)));
+  pdf = makeFakePdfRenderer();
+  const physio = await users.create({
+    email: 'fisio@example.com',
+    passwordHash: 'x',
+    fullName: 'Dra. Raiany',
+    cref: 'CREFITO-12345',
+  });
+  physioUserId = physio.id;
+  service = new ReportService(reports, patients, users, sessions, storage, pdf, clock);
 });
 
 describe('ReportService.summary', () => {
@@ -72,5 +106,85 @@ describe('ReportService.patientSummary', () => {
         '2026-03-31',
       ),
     ).rejects.toBeInstanceOf(NotFoundError);
+  });
+});
+
+describe('ReportService.monthlyReport', () => {
+  it('renders a PDF with patient, physio, REALIZADA sessions only, and the total', async () => {
+    const patient = await patients.create(samplePatient);
+    const created = await sessions.bulkCreateScheduled([
+      { patientId: patient.id, date: '2026-03-02', priceCents: 12000 },
+      { patientId: patient.id, date: '2026-03-09', priceCents: 12000 },
+      { patientId: patient.id, date: '2026-03-16', priceCents: 12000 },
+      { patientId: patient.id, date: '2026-03-23', priceCents: 12000 },
+    ]);
+    await sessions.update(created[0]!.id, { status: 'REALIZADA' });
+    await sessions.update(created[1]!.id, { status: 'REALIZADA' });
+    await sessions.update(created[2]!.id, { status: 'FALTA' });
+    await sessions.update(created[3]!.id, { status: 'REMARCADA' });
+
+    const buffer = await service.monthlyReport(physioUserId, patient.id, '2026-03');
+    expect(buffer.toString()).toBe('pdf:2026-03');
+
+    const call = pdf.calls[0]!;
+    expect(call.month).toBe('2026-03');
+    expect(call.physio).toEqual({ fullName: 'Dra. Raiany', cref: 'CREFITO-12345' });
+    expect(call.patient).toEqual({
+      fullName: patient.fullName,
+      address: patient.address,
+      phone: patient.phone,
+    });
+    expect(call.sessions.map((s) => s.date)).toEqual(['2026-03-02', '2026-03-09']);
+    expect(call.totalCents).toBe(24000);
+    expect(call.signature).toBeNull();
+    expect(call.issuedAt).toEqual(clock.now());
+  });
+
+  it('embeds the signature when the physio has one', async () => {
+    const patient = await patients.create(samplePatient);
+    await storage.save(`signature-${physioUserId}.png`, Buffer.from('PNGBYTES'));
+    await users.updateSignatureUrl(physioUserId, `/uploads/signature-${physioUserId}.png`);
+
+    await service.monthlyReport(physioUserId, patient.id, '2026-03');
+    expect(pdf.calls[0]!.signature?.toString()).toBe('PNGBYTES');
+  });
+
+  it('passes null signature when the signature file is missing', async () => {
+    const patient = await patients.create(samplePatient);
+    await users.updateSignatureUrl(physioUserId, `/uploads/signature-${physioUserId}.png`);
+    // file was never saved to storage
+    await service.monthlyReport(physioUserId, patient.id, '2026-03');
+    expect(pdf.calls[0]!.signature).toBeNull();
+  });
+
+  it('throws NotFoundError when the patient does not exist', async () => {
+    await expect(
+      service.monthlyReport(
+        physioUserId,
+        '00000000-0000-0000-0000-000000000000',
+        '2026-03',
+      ),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('throws NotFoundError when the physio user does not exist', async () => {
+    const patient = await patients.create(samplePatient);
+    await expect(
+      service.monthlyReport(
+        '00000000-0000-0000-0000-000000000000',
+        patient.id,
+        '2026-03',
+      ),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('returns an empty session list and zero total when no REALIZADA in the month', async () => {
+    const patient = await patients.create(samplePatient);
+    await sessions.bulkCreateScheduled([
+      { patientId: patient.id, date: '2026-03-02', priceCents: 12000 },
+    ]);
+    await service.monthlyReport(physioUserId, patient.id, '2026-03');
+    expect(pdf.calls[0]!.sessions).toEqual([]);
+    expect(pdf.calls[0]!.totalCents).toBe(0);
   });
 });

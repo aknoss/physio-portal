@@ -270,6 +270,11 @@ export class FakeFileStorage implements FileStorage {
     this.saved.push({ filename, content });
     return `/uploads/${filename}`;
   }
+
+  async read(filename: string): Promise<Buffer | null> {
+    const found = this.saved.find((s) => s.filename === filename);
+    return found ? Buffer.from(found.content) : null;
+  }
 }
 
 export class FixedClock implements Clock {

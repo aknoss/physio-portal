@@ -1,10 +1,29 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import bcrypt from 'bcrypt';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Express } from 'express';
+
+const requireCjs = createRequire(import.meta.url);
+const { PDFParse } = requireCjs('pdf-parse') as {
+  PDFParse: new (options: { data: Buffer }) => {
+    getText(): Promise<{ text: string }>;
+  };
+};
+
+async function extractText(buffer: Buffer): Promise<string> {
+  const parser = new PDFParse({ data: buffer });
+  const { text } = await parser.getText();
+  return text;
+}
+
+const ONE_PX_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64',
+);
 import {
   applyMigrations,
   type PgFixture,
@@ -188,5 +207,99 @@ describe('GET /reports/patient/:id', () => {
       .get(`/reports/patient/${id}?from=2026/03/01&to=2026-03-31`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(400);
+  });
+});
+
+describe('GET /reports/patient/:id/monthly.pdf', () => {
+  it('requires a token', async () => {
+    const res = await request(app).get(
+      '/reports/patient/00000000-0000-0000-0000-000000000000/monthly.pdf?month=2026-03',
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('returns the monthly PDF with the right headers and embedded text', async () => {
+    const token = await login();
+    const patientId = await createPatient(token, 'Pedro Silva');
+    await setupSchedule(token, patientId, [1], '2026-01-01');
+    await generateAndMarkAll(token, patientId, '2026-03-01', '2026-03-31', 'REALIZADA');
+
+    const res = await request(app)
+      .get(`/reports/patient/${patientId}/monthly.pdf?month=2026-03`)
+      .set('Authorization', `Bearer ${token}`)
+      .buffer(true)
+      .parse((response, callback) => {
+        const data: Buffer[] = [];
+        response.on('data', (chunk) => data.push(chunk as Buffer));
+        response.on('end', () => callback(null, Buffer.concat(data)));
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('application/pdf');
+    expect(res.headers['content-disposition']).toContain('monthly-');
+    const body = res.body as Buffer;
+    expect(body.subarray(0, 4).toString()).toBe('%PDF');
+    const text = await extractText(body);
+    expect(text).toContain('Pedro Silva');
+    expect(text).toContain('Dra. Raiany');
+    expect(text).toContain('CREFITO-99999');
+    expect(text).toContain('R$ 600,00'); // 5 sessions × R$120 in March 2026
+  });
+
+  it('embeds the uploaded signature when present', async () => {
+    const token = await login();
+    // upload signature
+    await writeFile(join(uploadsDir, 'placeholder.txt'), ''); // ensure dir exists
+    const sigRes = await request(app)
+      .post('/auth/me/signature')
+      .set('Authorization', `Bearer ${token}`)
+      .attach('signature', ONE_PX_PNG, { filename: 'sig.png', contentType: 'image/png' });
+    expect(sigRes.status).toBe(200);
+
+    const patientId = await createPatient(token);
+    await setupSchedule(token, patientId, [1], '2026-01-01');
+    await generateAndMarkAll(token, patientId, '2026-03-01', '2026-03-31', 'REALIZADA');
+
+    const res = await request(app)
+      .get(`/reports/patient/${patientId}/monthly.pdf?month=2026-03`)
+      .set('Authorization', `Bearer ${token}`)
+      .buffer(true)
+      .parse((response, callback) => {
+        const data: Buffer[] = [];
+        response.on('data', (chunk) => data.push(chunk as Buffer));
+        response.on('end', () => callback(null, Buffer.concat(data)));
+      });
+
+    expect(res.status).toBe(200);
+    const body = res.body as Buffer;
+    expect(body.includes(Buffer.from('/Image'))).toBe(true);
+  });
+
+  it('returns 400 when month is missing', async () => {
+    const token = await login();
+    const id = await createPatient(token);
+    const res = await request(app)
+      .get(`/reports/patient/${id}/monthly.pdf`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when month is malformed', async () => {
+    const token = await login();
+    const id = await createPatient(token);
+    const res = await request(app)
+      .get(`/reports/patient/${id}/monthly.pdf?month=2026-3`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 when the patient does not exist', async () => {
+    const token = await login();
+    const res = await request(app)
+      .get(
+        '/reports/patient/00000000-0000-0000-0000-000000000000/monthly.pdf?month=2026-03',
+      )
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
   });
 });

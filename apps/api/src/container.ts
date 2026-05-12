@@ -17,9 +17,11 @@ import { PgReportRepository } from './modules/reports/PgReportRepository.js';
 import { ReportService } from './modules/reports/ReportService.js';
 import { createReportRouter } from './modules/reports/ReportController.js';
 import { BcryptPasswordHasher } from './shared/crypto/BcryptPasswordHasher.js';
+import { SystemClock } from './shared/clock/SystemClock.js';
 import { errorHandler } from './shared/middleware/errorHandler.js';
 import { LocalFileStorage } from './shared/storage/LocalFileStorage.js';
 import { JwtTokenSigner } from './shared/tokens/JwtTokenSigner.js';
+import { PdfKitRenderer } from './infra/pdf/PdfKitRenderer.js';
 
 export type AppConfig = {
   pool: Pool;
@@ -32,6 +34,8 @@ export function buildApp(config: AppConfig): Express {
   const passwordHasher = new BcryptPasswordHasher();
   const tokenSigner = new JwtTokenSigner(config.jwtSecret);
   const fileStorage = new LocalFileStorage(config.uploadsDir, config.uploadsPublicPrefix);
+  const pdfRenderer = new PdfKitRenderer();
+  const clock = new SystemClock();
 
   const userRepository = new PgUserRepository(config.pool);
   const patientRepository = new PgPatientRepository(config.pool);
@@ -47,7 +51,15 @@ export function buildApp(config: AppConfig): Express {
     scheduleRepository,
     patientRepository,
   );
-  const reportService = new ReportService(reportRepository, patientRepository);
+  const reportService = new ReportService(
+    reportRepository,
+    patientRepository,
+    userRepository,
+    sessionRepository,
+    fileStorage,
+    pdfRenderer,
+    clock,
+  );
 
   const app = express();
   app.use(express.json());
