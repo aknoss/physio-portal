@@ -206,30 +206,38 @@ Everything (except `/auth/login`) is protected by the JWT middleware.
 
 ## SOLID / DI on the backend
 
-**Composition root** in `src/container.ts` using **tsyringe** (TS decorators). Each module exposes:
+**Composition root** in `src/container.ts` as a plain `buildApp(config)` function — no DI container, no decorators, no `reflect-metadata`. DI is constructor injection wired by hand. Each module exposes:
 
 - `XRepository` (interface) → `PgXRepository` (impl that receives `pg.Pool` in the constructor and runs parameterized queries)
-- `XService` (logic) receives the repository via constructor
-- `XController` receives the service via constructor
+- `XService` (logic) receives its repositories and abstractions via constructor
+- `XController` (router factory) receives the service via constructor
 
 Example:
 
 ```ts
 // modules/sessions/SessionService.ts
-@injectable()
 export class SessionService {
   constructor(
-    @inject('SessionRepository') private repo: SessionRepository,
-    @inject('ScheduleRepository') private schedules: ScheduleRepository,
-    @inject('Clock') private clock: Clock,        // abstraction for tests
+    private readonly repo: SessionRepository,
+    private readonly schedules: ScheduleRepository,
+    private readonly clock: Clock,        // abstraction for tests
   ) {}
   generateForRange(patientId: string, from: Date, to: Date) { … }
   markStatus(id: string, status: SessionStatus) { … }
+}
+
+// src/container.ts
+export function buildApp(config: AppConfig): Express {
+  const sessionRepo = new PgSessionRepository(config.pool);
+  const scheduleRepo = new PgScheduleRepository(config.pool);
+  const sessions = new SessionService(sessionRepo, scheduleRepo, config.clock);
+  // …wire controllers, mount routers, return app
 }
 ```
 
 An injected `Clock` allows testing session generation without mocking `Date`.
 PDFs and files go through `PdfRenderer` and `FileStorage` interfaces — implementations are swappable.
+Tests compose their own graphs directly (`new SessionService(fakeRepo, fakeSchedules, fakeClock)`) without touching `buildApp`.
 
 ---
 
@@ -282,7 +290,7 @@ Each stage is mergeable and leaves the app usable up to what was delivered. By t
 - PT-BR setup README.
 
 ### Stage 1 — API: bootstrap + auth + DI
-- Express + tsyringe + `pg` driver (injectable Pool) + error middleware.
+- Express + `pg` driver (Pool created in `server.ts`, passed into `buildApp`) + error middleware. DI is manual constructor injection inside `container.ts`.
 - Migration `0001_init` creating all tables (users, patients, schedules, sessions + `session_status` enum).
 - Physiotherapist seed in `apps/api/src/db/seed.ts` (email/password from env, idempotent).
 - `POST /auth/login`, `GET /auth/me`, JWT middleware.

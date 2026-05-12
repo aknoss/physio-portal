@@ -14,7 +14,7 @@ Web app for a physiotherapist to manage patients, recurring sessions, weekly/mon
 ## Stack
 
 - **Monorepo:** npm workspaces (no Turborepo/Nx).
-- **Backend (`apps/api`):** Express + `pg` (no ORM) + tsyringe (DI) + Zod + JWT + pdfkit.
+- **Backend (`apps/api`):** Express + `pg` (no ORM) + manual constructor-injection DI + Zod + JWT + pdfkit.
 - **Frontend (`apps/web`):** React + Vite + TypeScript + React Query + react-router + Tailwind + react-hook-form.
 - **Shared contracts (`packages/contracts`):** Zod schemas as the single source of truth for types and validation.
 - **Database:** PostgreSQL with manual SQL migrations (paired `up.sql` / `down.sql`) and a custom runner.

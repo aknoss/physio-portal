@@ -124,6 +124,16 @@ describe('PgPatientRepository', () => {
     expect(updated?.fullName).toBe(sample.fullName);
   });
 
+  it('update skips keys whose value is explicitly undefined', async () => {
+    const created = await repo.create(sample);
+    const updated = await repo.update(created.id, {
+      fullName: undefined,
+      address: 'Nova Rua, 999',
+    });
+    expect(updated?.address).toBe('Nova Rua, 999');
+    expect(updated?.fullName).toBe(sample.fullName);
+  });
+
   it('update returns null when the patient does not exist', async () => {
     const updated = await repo.update('00000000-0000-0000-0000-000000000000', {
       fullName: 'X',

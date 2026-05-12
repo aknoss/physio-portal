@@ -203,6 +203,32 @@ describe('PATCH /patients/:id', () => {
     expect(res.body.fullName).toBe('Outro Nome');
   });
 
+  it('updates every mutable field when all are provided', async () => {
+    const token = await login();
+    const created = await request(app)
+      .post('/patients')
+      .set('Authorization', `Bearer ${token}`)
+      .send(validBody);
+    const res = await request(app)
+      .patch(`/patients/${created.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        fullName: 'Nome Novo',
+        address: 'Rua Z, 999',
+        phone: '+5511912345678',
+        sessionPriceCents: 18000,
+        notes: 'observação',
+        active: false,
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.fullName).toBe('Nome Novo');
+    expect(res.body.address).toBe('Rua Z, 999');
+    expect(res.body.phone).toBe('+5511912345678');
+    expect(res.body.sessionPriceCents).toBe(18000);
+    expect(res.body.notes).toBe('observação');
+    expect(res.body.active).toBe(false);
+  });
+
   it('returns 400 when no fields are provided', async () => {
     const token = await login();
     const created = await request(app)
