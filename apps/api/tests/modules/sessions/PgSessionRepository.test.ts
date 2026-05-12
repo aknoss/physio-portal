@@ -86,4 +86,58 @@ describe('PgSessionRepository', () => {
     expect(list).toHaveLength(1);
     expect(list[0]!.patientId).toBe(a.id);
   });
+
+  it('findById returns the session', async () => {
+    const patient = await patients.create(samplePatient);
+    const [created] = await sessions.bulkCreateScheduled([
+      { patientId: patient.id, date: '2026-03-02', priceCents: 12000 },
+    ]);
+    const found = await sessions.findById(created!.id);
+    expect(found?.id).toBe(created!.id);
+  });
+
+  it('findById returns null for an unknown id', async () => {
+    const found = await sessions.findById('00000000-0000-0000-0000-000000000000');
+    expect(found).toBeNull();
+  });
+
+  it('update changes status and note', async () => {
+    const patient = await patients.create(samplePatient);
+    const [created] = await sessions.bulkCreateScheduled([
+      { patientId: patient.id, date: '2026-03-02', priceCents: 12000 },
+    ]);
+    const updated = await sessions.update(created!.id, {
+      status: 'REALIZADA',
+      note: 'ok',
+    });
+    expect(updated?.status).toBe('REALIZADA');
+    expect(updated?.note).toBe('ok');
+  });
+
+  it('update can clear the note', async () => {
+    const patient = await patients.create(samplePatient);
+    const [created] = await sessions.bulkCreateScheduled([
+      { patientId: patient.id, date: '2026-03-02', priceCents: 12000 },
+    ]);
+    await sessions.update(created!.id, { note: 'temp' });
+    const cleared = await sessions.update(created!.id, { note: null });
+    expect(cleared?.note).toBeNull();
+  });
+
+  it('update with no fields returns the row unchanged', async () => {
+    const patient = await patients.create(samplePatient);
+    const [created] = await sessions.bulkCreateScheduled([
+      { patientId: patient.id, date: '2026-03-02', priceCents: 12000 },
+    ]);
+    const result = await sessions.update(created!.id, {});
+    expect(result?.id).toBe(created!.id);
+    expect(result?.status).toBe('SCHEDULED');
+  });
+
+  it('update returns null for an unknown id', async () => {
+    const result = await sessions.update('00000000-0000-0000-0000-000000000000', {
+      status: 'REALIZADA',
+    });
+    expect(result).toBeNull();
+  });
 });

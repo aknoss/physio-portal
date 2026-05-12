@@ -1,0 +1,113 @@
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  applyMigrations,
+  type PgFixture,
+  startPostgres,
+  stopPostgres,
+} from '../../helpers/postgres.js';
+import { PgPatientRepository } from '../../../src/modules/patients/PgPatientRepository.js';
+import { PgSessionRepository } from '../../../src/modules/sessions/PgSessionRepository.js';
+import { PgReportRepository } from '../../../src/modules/reports/PgReportRepository.js';
+
+let fixture: PgFixture;
+let patients: PgPatientRepository;
+let sessions: PgSessionRepository;
+let reports: PgReportRepository;
+
+beforeAll(async () => {
+  fixture = await startPostgres();
+  await applyMigrations(fixture.pool);
+  patients = new PgPatientRepository(fixture.pool);
+  sessions = new PgSessionRepository(fixture.pool);
+  reports = new PgReportRepository(fixture.pool);
+});
+
+afterAll(async () => {
+  await stopPostgres(fixture);
+});
+
+beforeEach(async () => {
+  await fixture.pool.query('TRUNCATE patients CASCADE');
+});
+
+const samplePatient = {
+  fullName: 'Raiany Silva',
+  address: 'Rua A, 123',
+  phone: '+5521987654321',
+  sessionPriceCents: 12000,
+  notes: null,
+};
+
+async function seedSessions(
+  patientId: string,
+  rows: { date: string; status: 'SCHEDULED' | 'REALIZADA' | 'FALTA' | 'REMARCADA'; priceCents: number }[],
+): Promise<void> {
+  for (const row of rows) {
+    const [created] = await sessions.bulkCreateScheduled([
+      { patientId, date: row.date, priceCents: row.priceCents },
+    ]);
+    if (row.status !== 'SCHEDULED') {
+      await sessions.update(created!.id, { status: row.status });
+    }
+  }
+}
+
+describe('PgReportRepository.summaryInRange', () => {
+  it('returns zeros when there are no sessions', async () => {
+    const result = await reports.summaryInRange('2026-03-01', '2026-03-31');
+    expect(result).toEqual({ totalCents: 0, sessionCount: 0 });
+  });
+
+  it('sums REALIZADA sessions across all patients in range', async () => {
+    const a = await patients.create({ ...samplePatient, fullName: 'A' });
+    const b = await patients.create({ ...samplePatient, fullName: 'B' });
+    await seedSessions(a.id, [
+      { date: '2026-03-02', status: 'REALIZADA', priceCents: 12000 },
+      { date: '2026-03-09', status: 'FALTA', priceCents: 12000 },
+    ]);
+    await seedSessions(b.id, [
+      { date: '2026-03-03', status: 'REALIZADA', priceCents: 8000 },
+      { date: '2026-03-10', status: 'REMARCADA', priceCents: 8000 },
+      { date: '2026-04-01', status: 'REALIZADA', priceCents: 8000 },
+    ]);
+    const result = await reports.summaryInRange('2026-03-01', '2026-03-31');
+    expect(result).toEqual({ totalCents: 20000, sessionCount: 2 });
+  });
+
+  it('excludes SCHEDULED, FALTA, and REMARCADA from the totals', async () => {
+    const p = await patients.create(samplePatient);
+    await seedSessions(p.id, [
+      { date: '2026-03-02', status: 'SCHEDULED', priceCents: 12000 },
+      { date: '2026-03-04', status: 'FALTA', priceCents: 12000 },
+      { date: '2026-03-06', status: 'REMARCADA', priceCents: 12000 },
+    ]);
+    const result = await reports.summaryInRange('2026-03-01', '2026-03-31');
+    expect(result).toEqual({ totalCents: 0, sessionCount: 0 });
+  });
+});
+
+describe('PgReportRepository.patientSummaryInRange', () => {
+  it('scopes totals to a single patient', async () => {
+    const a = await patients.create({ ...samplePatient, fullName: 'A' });
+    const b = await patients.create({ ...samplePatient, fullName: 'B' });
+    await seedSessions(a.id, [
+      { date: '2026-03-02', status: 'REALIZADA', priceCents: 12000 },
+      { date: '2026-03-09', status: 'REALIZADA', priceCents: 12000 },
+    ]);
+    await seedSessions(b.id, [
+      { date: '2026-03-03', status: 'REALIZADA', priceCents: 9999 },
+    ]);
+    const result = await reports.patientSummaryInRange(a.id, '2026-03-01', '2026-03-31');
+    expect(result).toEqual({ totalCents: 24000, sessionCount: 2 });
+  });
+
+  it('returns zeros when the patient has no REALIZADA sessions in range', async () => {
+    const p = await patients.create(samplePatient);
+    await seedSessions(p.id, [
+      { date: '2026-02-01', status: 'REALIZADA', priceCents: 12000 },
+      { date: '2026-04-01', status: 'REALIZADA', priceCents: 12000 },
+    ]);
+    const result = await reports.patientSummaryInRange(p.id, '2026-03-01', '2026-03-31');
+    expect(result).toEqual({ totalCents: 0, sessionCount: 0 });
+  });
+});

@@ -172,3 +172,88 @@ describe('POST /patients/:id/sessions/generate', () => {
     expect(res.status).toBe(404);
   });
 });
+
+async function generateOne(token: string, patientId: string): Promise<string> {
+  const res = await request(app)
+    .post(`/patients/${patientId}/sessions/generate`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ from: '2026-03-02', to: '2026-03-02' });
+  return res.body[0].id as string;
+}
+
+describe('PATCH /sessions/:id', () => {
+  it('requires a token', async () => {
+    const res = await request(app)
+      .patch('/sessions/00000000-0000-0000-0000-000000000000')
+      .send({ status: 'REALIZADA' });
+    expect(res.status).toBe(401);
+  });
+
+  it('marks a session as REALIZADA', async () => {
+    const token = await login();
+    const patientId = await createPatientWithSchedule(token, [1], '2026-01-01');
+    const sessionId = await generateOne(token, patientId);
+    const res = await request(app)
+      .patch(`/sessions/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'REALIZADA' });
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('REALIZADA');
+    expect(res.body.id).toBe(sessionId);
+  });
+
+  it('accepts a note alongside the status', async () => {
+    const token = await login();
+    const patientId = await createPatientWithSchedule(token, [1], '2026-01-01');
+    const sessionId = await generateOne(token, patientId);
+    const res = await request(app)
+      .patch(`/sessions/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'FALTA', note: 'paciente avisou' });
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('FALTA');
+    expect(res.body.note).toBe('paciente avisou');
+  });
+
+  it('returns 400 when no field is provided', async () => {
+    const token = await login();
+    const patientId = await createPatientWithSchedule(token, [1], '2026-01-01');
+    const sessionId = await generateOne(token, patientId);
+    const res = await request(app)
+      .patch(`/sessions/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when status is SCHEDULED (not an allowed transition)', async () => {
+    const token = await login();
+    const patientId = await createPatientWithSchedule(token, [1], '2026-01-01');
+    const sessionId = await generateOne(token, patientId);
+    const res = await request(app)
+      .patch(`/sessions/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'SCHEDULED' });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for an invalid status', async () => {
+    const token = await login();
+    const patientId = await createPatientWithSchedule(token, [1], '2026-01-01');
+    const sessionId = await generateOne(token, patientId);
+    const res = await request(app)
+      .patch(`/sessions/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'NOPE' });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 when the session does not exist', async () => {
+    const token = await login();
+    const res = await request(app)
+      .patch('/sessions/00000000-0000-0000-0000-000000000000')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'REALIZADA' });
+    expect(res.status).toBe(404);
+  });
+});

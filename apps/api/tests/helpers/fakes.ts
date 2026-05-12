@@ -147,6 +147,7 @@ import type { Session } from '../../src/modules/sessions/Session.js';
 import type {
   CreateSessionInput,
   SessionRepository,
+  UpdateSessionInput,
 } from '../../src/modules/sessions/SessionRepository.js';
 
 export class InMemorySessionRepository implements SessionRepository {
@@ -183,8 +184,61 @@ export class InMemorySessionRepository implements SessionRepository {
       .map((r) => ({ ...r }));
   }
 
+  async findById(id: string): Promise<Session | null> {
+    const found = this.rows.find((r) => r.id === id);
+    return found ? { ...found } : null;
+  }
+
+  async update(id: string, input: UpdateSessionInput): Promise<Session | null> {
+    const row = this.rows.find((r) => r.id === id);
+    if (!row) return null;
+    if (input.status !== undefined) row.status = input.status;
+    if (input.note !== undefined) row.note = input.note;
+    return { ...row };
+  }
+
   snapshot(): Session[] {
     return this.rows.map((r) => ({ ...r }));
+  }
+}
+
+import type {
+  ReportRepository,
+  ReportTotals,
+} from '../../src/modules/reports/ReportRepository.js';
+
+export class InMemoryReportRepository implements ReportRepository {
+  private readonly summaries = new Map<string, ReportTotals>();
+  private readonly patientSummaries = new Map<string, ReportTotals>();
+
+  setSummary(from: string, to: string, totals: ReportTotals): void {
+    this.summaries.set(`${from}|${to}`, { ...totals });
+  }
+
+  setPatientSummary(
+    patientId: string,
+    from: string,
+    to: string,
+    totals: ReportTotals,
+  ): void {
+    this.patientSummaries.set(`${patientId}|${from}|${to}`, { ...totals });
+  }
+
+  async summaryInRange(from: string, to: string): Promise<ReportTotals> {
+    return this.summaries.get(`${from}|${to}`) ?? { totalCents: 0, sessionCount: 0 };
+  }
+
+  async patientSummaryInRange(
+    patientId: string,
+    from: string,
+    to: string,
+  ): Promise<ReportTotals> {
+    return (
+      this.patientSummaries.get(`${patientId}|${from}|${to}`) ?? {
+        totalCents: 0,
+        sessionCount: 0,
+      }
+    );
   }
 }
 

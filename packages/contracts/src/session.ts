@@ -7,6 +7,20 @@ const isoDate = z
 export const SessionStatus = z.enum(['SCHEDULED', 'REALIZADA', 'FALTA', 'REMARCADA']);
 export type SessionStatus = z.infer<typeof SessionStatus>;
 
+export const UpdatableSessionStatus = z.enum(['REALIZADA', 'FALTA', 'REMARCADA']);
+export type UpdatableSessionStatus = z.infer<typeof UpdatableSessionStatus>;
+
+export const UpdateSessionRequest = z
+  .object({
+    status: UpdatableSessionStatus.optional(),
+    note: z.string().nullable().optional(),
+  })
+  .refine((v) => v.status !== undefined || v.note !== undefined, {
+    message: 'At least one field must be provided',
+  });
+
+export type UpdateSessionRequest = z.infer<typeof UpdateSessionRequest>;
+
 export const GenerateSessionsRequest = z
   .object({
     from: isoDate,

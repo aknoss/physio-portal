@@ -8,7 +8,11 @@ import {
 import type { PatientRepository } from '../patients/PatientRepository.js';
 import type { ScheduleRepository } from '../schedule/ScheduleRepository.js';
 import type { Session } from './Session.js';
-import type { CreateSessionInput, SessionRepository } from './SessionRepository.js';
+import type {
+  CreateSessionInput,
+  SessionRepository,
+  UpdateSessionInput,
+} from './SessionRepository.js';
 
 export class SessionService {
   constructor(
@@ -36,5 +40,11 @@ export class SessionService {
 
     await this.sessions.bulkCreateScheduled(inputs);
     return this.sessions.listByPatientInRange(patientId, from, to);
+  }
+
+  async updateStatus(id: string, input: UpdateSessionInput): Promise<Session> {
+    const updated = await this.sessions.update(id, input);
+    if (!updated) throw new NotFoundError('Session not found');
+    return updated;
   }
 }

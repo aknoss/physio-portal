@@ -162,3 +162,84 @@ describe('SessionService.generate', () => {
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 });
+
+describe('SessionService.updateStatus', () => {
+  it('marks a SCHEDULED session as REALIZADA', async () => {
+    const patient = await patients.create(samplePatient);
+    await schedules.upsert({
+      patientId: patient.id,
+      weekdays: [1],
+      startDate: '2026-03-01',
+      endDate: null,
+    });
+    const [created] = await service.generate(patient.id, '2026-03-02', '2026-03-02');
+    const updated = await service.updateStatus(created!.id, { status: 'REALIZADA' });
+    expect(updated.status).toBe('REALIZADA');
+    expect(updated.id).toBe(created!.id);
+  });
+
+  it('marks a session as FALTA with a note', async () => {
+    const patient = await patients.create(samplePatient);
+    await schedules.upsert({
+      patientId: patient.id,
+      weekdays: [1],
+      startDate: '2026-03-01',
+      endDate: null,
+    });
+    const [created] = await service.generate(patient.id, '2026-03-02', '2026-03-02');
+    const updated = await service.updateStatus(created!.id, {
+      status: 'FALTA',
+      note: 'paciente avisou',
+    });
+    expect(updated.status).toBe('FALTA');
+    expect(updated.note).toBe('paciente avisou');
+  });
+
+  it('updates only the note when status is omitted', async () => {
+    const patient = await patients.create(samplePatient);
+    await schedules.upsert({
+      patientId: patient.id,
+      weekdays: [1],
+      startDate: '2026-03-01',
+      endDate: null,
+    });
+    const [created] = await service.generate(patient.id, '2026-03-02', '2026-03-02');
+    const updated = await service.updateStatus(created!.id, { note: 'anotação' });
+    expect(updated.status).toBe('SCHEDULED');
+    expect(updated.note).toBe('anotação');
+  });
+
+  it('allows clearing the note by passing null', async () => {
+    const patient = await patients.create(samplePatient);
+    await schedules.upsert({
+      patientId: patient.id,
+      weekdays: [1],
+      startDate: '2026-03-01',
+      endDate: null,
+    });
+    const [created] = await service.generate(patient.id, '2026-03-02', '2026-03-02');
+    await service.updateStatus(created!.id, { note: 'tmp' });
+    const cleared = await service.updateStatus(created!.id, { note: null });
+    expect(cleared.note).toBeNull();
+  });
+
+  it('allows transitioning between non-SCHEDULED statuses (correction)', async () => {
+    const patient = await patients.create(samplePatient);
+    await schedules.upsert({
+      patientId: patient.id,
+      weekdays: [1],
+      startDate: '2026-03-01',
+      endDate: null,
+    });
+    const [created] = await service.generate(patient.id, '2026-03-02', '2026-03-02');
+    await service.updateStatus(created!.id, { status: 'REALIZADA' });
+    const corrected = await service.updateStatus(created!.id, { status: 'FALTA' });
+    expect(corrected.status).toBe('FALTA');
+  });
+
+  it('throws NotFoundError when the session does not exist', async () => {
+    await expect(
+      service.updateStatus('00000000-0000-0000-0000-000000000000', { status: 'REALIZADA' }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
+});

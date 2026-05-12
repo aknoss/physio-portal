@@ -28,6 +28,7 @@ export default defineConfig({
         'src/modules/schedule/ScheduleRepository.ts',
         'src/modules/sessions/Session.ts',
         'src/modules/sessions/SessionRepository.ts',
+        'src/modules/reports/ReportRepository.ts',
       ],
       thresholds: {
         statements: 100,

@@ -1,6 +1,10 @@
 import type { Pool } from 'pg';
 import type { Session } from './Session.js';
-import type { CreateSessionInput, SessionRepository } from './SessionRepository.js';
+import type {
+  CreateSessionInput,
+  SessionRepository,
+  UpdateSessionInput,
+} from './SessionRepository.js';
 import type { SessionStatus } from '@physio-portal/contracts';
 
 type SessionRow = {
@@ -59,5 +63,38 @@ export class PgSessionRepository implements SessionRepository {
       [patientId, from, to],
     );
     return result.rows.map(mapRow);
+  }
+
+  async findById(id: string): Promise<Session | null> {
+    const result = await this.pool.query<SessionRow>(
+      `SELECT id, patient_id, date, status, price_cents, note
+         FROM sessions
+        WHERE id = $1`,
+      [id],
+    );
+    return result.rowCount === 0 ? null : mapRow(result.rows[0]!);
+  }
+
+  async update(id: string, input: UpdateSessionInput): Promise<Session | null> {
+    const sets: string[] = [];
+    const values: unknown[] = [id];
+    if (input.status !== undefined) {
+      values.push(input.status);
+      sets.push(`status = $${values.length}`);
+    }
+    if (input.note !== undefined) {
+      values.push(input.note);
+      sets.push(`note = $${values.length}`);
+    }
+    if (sets.length === 0) {
+      return this.findById(id);
+    }
+    const result = await this.pool.query<SessionRow>(
+      `UPDATE sessions SET ${sets.join(', ')}
+         WHERE id = $1
+       RETURNING id, patient_id, date, status, price_cents, note`,
+      values,
+    );
+    return result.rowCount === 0 ? null : mapRow(result.rows[0]!);
   }
 }
