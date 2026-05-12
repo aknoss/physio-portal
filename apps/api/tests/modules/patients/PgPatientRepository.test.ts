@@ -126,10 +126,10 @@ describe('PgPatientRepository', () => {
 
   it('update skips keys whose value is explicitly undefined', async () => {
     const created = await repo.create(sample);
-    const updated = await repo.update(created.id, {
-      fullName: undefined,
-      address: 'Nova Rua, 999',
-    });
+    const input = { fullName: undefined, address: 'Nova Rua, 999' } as unknown as Parameters<
+      typeof repo.update
+    >[1];
+    const updated = await repo.update(created.id, input);
     expect(updated?.address).toBe('Nova Rua, 999');
     expect(updated?.fullName).toBe(sample.fullName);
   });

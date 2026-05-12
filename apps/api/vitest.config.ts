@@ -24,6 +24,10 @@ export default defineConfig({
         'src/modules/auth/UserRepository.ts',
         'src/modules/patients/Patient.ts',
         'src/modules/patients/PatientRepository.ts',
+        'src/modules/schedule/Schedule.ts',
+        'src/modules/schedule/ScheduleRepository.ts',
+        'src/modules/sessions/Session.ts',
+        'src/modules/sessions/SessionRepository.ts',
       ],
       thresholds: {
         statements: 100,

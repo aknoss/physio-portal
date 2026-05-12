@@ -117,6 +117,77 @@ export class InMemoryPatientRepository implements PatientRepository {
   }
 }
 
+import type { Schedule } from '../../src/modules/schedule/Schedule.js';
+import type {
+  ScheduleRepository,
+  UpsertScheduleInput,
+} from '../../src/modules/schedule/ScheduleRepository.js';
+
+export class InMemoryScheduleRepository implements ScheduleRepository {
+  private readonly rows = new Map<string, Schedule>();
+
+  async upsert(input: UpsertScheduleInput): Promise<Schedule> {
+    const schedule: Schedule = {
+      patientId: input.patientId,
+      weekdays: [...input.weekdays],
+      startDate: input.startDate,
+      endDate: input.endDate,
+    };
+    this.rows.set(input.patientId, schedule);
+    return { ...schedule, weekdays: [...schedule.weekdays] };
+  }
+
+  async findByPatientId(patientId: string): Promise<Schedule | null> {
+    const found = this.rows.get(patientId);
+    return found ? { ...found, weekdays: [...found.weekdays] } : null;
+  }
+}
+
+import type { Session } from '../../src/modules/sessions/Session.js';
+import type {
+  CreateSessionInput,
+  SessionRepository,
+} from '../../src/modules/sessions/SessionRepository.js';
+
+export class InMemorySessionRepository implements SessionRepository {
+  private readonly rows: Session[] = [];
+
+  async bulkCreateScheduled(inputs: CreateSessionInput[]): Promise<Session[]> {
+    const created: Session[] = [];
+    for (const input of inputs) {
+      if (this.rows.some((r) => r.patientId === input.patientId && r.date === input.date)) {
+        continue;
+      }
+      const session: Session = {
+        id: randomUUID(),
+        patientId: input.patientId,
+        date: input.date,
+        status: 'SCHEDULED',
+        priceCents: input.priceCents,
+        note: null,
+      };
+      this.rows.push(session);
+      created.push({ ...session });
+    }
+    return created;
+  }
+
+  async listByPatientInRange(
+    patientId: string,
+    from: string,
+    to: string,
+  ): Promise<Session[]> {
+    return this.rows
+      .filter((r) => r.patientId === patientId && r.date >= from && r.date <= to)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((r) => ({ ...r }));
+  }
+
+  snapshot(): Session[] {
+    return this.rows.map((r) => ({ ...r }));
+  }
+}
+
 export class FakePasswordHasher implements PasswordHasher {
   async hash(plain: string): Promise<string> {
     return `hashed:${plain}`;

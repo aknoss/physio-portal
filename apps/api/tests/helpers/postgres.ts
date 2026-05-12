@@ -2,6 +2,7 @@ import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testconta
 import { Pool } from 'pg';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import '../../src/db/pgTypes.js';
 import { up } from '../../src/db/migrate.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
