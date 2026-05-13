@@ -42,6 +42,10 @@ export class SessionService {
     return this.sessions.listByPatientInRange(patientId, from, to);
   }
 
+  async listInRange(patientId: string, from: string, to: string): Promise<Session[]> {
+    return this.sessions.listByPatientInRange(patientId, from, to);
+  }
+
   async updateStatus(id: string, input: UpdateSessionInput): Promise<Session> {
     const updated = await this.sessions.update(id, input);
     if (!updated) throw new NotFoundError('Session not found');

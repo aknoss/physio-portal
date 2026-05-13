@@ -14,6 +14,11 @@ export async function listPatients(query?: ListPatientsQuery): Promise<PatientDt
   return data as PatientDto[];
 }
 
+export async function getPatient(id: string): Promise<PatientDto> {
+  const { data } = await apiClient.get(`/patients/${id}`);
+  return data as PatientDto;
+}
+
 export async function createPatient(body: CreatePatientRequest): Promise<PatientDto> {
   const { data } = await apiClient.post('/patients', body);
   return data as PatientDto;

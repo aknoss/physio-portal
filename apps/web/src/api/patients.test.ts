@@ -4,6 +4,7 @@ import { server } from '../../tests/msw/server';
 import {
   createPatient,
   deactivatePatient,
+  getPatient,
   listPatients,
   updatePatient,
 } from './patients';
@@ -47,6 +48,17 @@ describe('patients api client', () => {
     const url = new URL(receivedUrl);
     expect(url.searchParams.get('active')).toBe('false');
     expect(url.searchParams.get('search')).toBe('jo');
+  });
+
+  it('getPatient fetches by id', async () => {
+    server.use(
+      http.get('/api/patients/:id', ({ params }) => {
+        expect(params.id).toBe(SAMPLE.id);
+        return HttpResponse.json(SAMPLE);
+      }),
+    );
+    const result = await getPatient(SAMPLE.id);
+    expect(result).toEqual(SAMPLE);
   });
 
   it('createPatient posts the body and returns the created patient', async () => {

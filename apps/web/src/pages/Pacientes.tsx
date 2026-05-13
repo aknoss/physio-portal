@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PatientDto } from '@physio-portal/contracts';
 import {
@@ -148,7 +149,11 @@ export function Pacientes() {
             <article className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h2 className="font-semibold">{p.fullName}</h2>
+                  <h2 className="font-semibold">
+                    <Link to={`/pacientes/${p.id}`} className="hover:underline">
+                      {p.fullName}
+                    </Link>
+                  </h2>
                   <p className="text-sm text-slate-600">{p.address}</p>
                 </div>
                 {!p.active && (

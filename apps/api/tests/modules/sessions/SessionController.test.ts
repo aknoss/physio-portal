@@ -173,6 +173,66 @@ describe('POST /patients/:id/sessions/generate', () => {
   });
 });
 
+describe('GET /patients/:id/sessions', () => {
+  it('requires a token', async () => {
+    const res = await request(app)
+      .get('/patients/00000000-0000-0000-0000-000000000000/sessions')
+      .query({ from: '2026-03-01', to: '2026-03-31' });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns sessions inside the inclusive range, sorted by date', async () => {
+    const token = await login();
+    const id = await createPatientWithSchedule(token, [1, 3], '2026-01-01');
+    await request(app)
+      .post(`/patients/${id}/sessions/generate`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ from: '2026-03-01', to: '2026-03-31' });
+    const res = await request(app)
+      .get(`/patients/${id}/sessions`)
+      .set('Authorization', `Bearer ${token}`)
+      .query({ from: '2026-03-04', to: '2026-03-11' });
+    expect(res.status).toBe(200);
+    expect(res.body.map((s: { date: string }) => s.date)).toEqual([
+      '2026-03-04',
+      '2026-03-09',
+      '2026-03-11',
+    ]);
+    expect(res.body.every((s: { status: string }) => s.status === 'SCHEDULED')).toBe(true);
+  });
+
+  it('returns an empty array when there are no sessions in the range', async () => {
+    const token = await login();
+    const id = await createPatientWithSchedule(token, [1], '2026-01-01');
+    const res = await request(app)
+      .get(`/patients/${id}/sessions`)
+      .set('Authorization', `Bearer ${token}`)
+      .query({ from: '2026-03-01', to: '2026-03-31' });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns 400 when from is after to', async () => {
+    const token = await login();
+    const id = await createPatientWithSchedule(token, [1], '2026-01-01');
+    const res = await request(app)
+      .get(`/patients/${id}/sessions`)
+      .set('Authorization', `Bearer ${token}`)
+      .query({ from: '2026-04-01', to: '2026-03-01' });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when dates are not ISO calendar dates', async () => {
+    const token = await login();
+    const id = await createPatientWithSchedule(token, [1], '2026-01-01');
+    const res = await request(app)
+      .get(`/patients/${id}/sessions`)
+      .set('Authorization', `Bearer ${token}`)
+      .query({ from: '2026/03/01', to: '2026-03-31' });
+    expect(res.status).toBe(400);
+  });
+});
+
 async function generateOne(token: string, patientId: string): Promise<string> {
   const res = await request(app)
     .post(`/patients/${patientId}/sessions/generate`)

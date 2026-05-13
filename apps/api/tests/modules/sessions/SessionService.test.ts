@@ -163,6 +163,33 @@ describe('SessionService.generate', () => {
   });
 });
 
+describe('SessionService.listInRange', () => {
+  it('returns sessions inside the inclusive range, sorted by date', async () => {
+    const patient = await patients.create(samplePatient);
+    await schedules.upsert({
+      patientId: patient.id,
+      weekdays: [1, 3, 5],
+      startDate: '2026-03-01',
+      endDate: null,
+    });
+    await service.generate(patient.id, '2026-03-01', '2026-03-31');
+    const result = await service.listInRange(patient.id, '2026-03-04', '2026-03-13');
+    expect(result.map((s) => s.date)).toEqual([
+      '2026-03-04',
+      '2026-03-06',
+      '2026-03-09',
+      '2026-03-11',
+      '2026-03-13',
+    ]);
+  });
+
+  it('returns an empty list when no sessions match', async () => {
+    const patient = await patients.create(samplePatient);
+    const result = await service.listInRange(patient.id, '2026-03-01', '2026-03-31');
+    expect(result).toEqual([]);
+  });
+});
+
 describe('SessionService.updateStatus', () => {
   it('marks a SCHEDULED session as REALIZADA', async () => {
     const patient = await patients.create(samplePatient);

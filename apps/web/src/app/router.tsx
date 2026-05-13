@@ -3,6 +3,7 @@ import { Layout } from '../components/Layout';
 import { RequireAuth } from '../auth/RequireAuth';
 import { Login } from '../pages/Login';
 import { Pacientes } from '../pages/Pacientes';
+import { PatientDetail } from '../pages/PatientDetail';
 import { Relatorios } from '../pages/Relatorios';
 import { Configuracoes } from '../pages/Configuracoes';
 
@@ -19,6 +20,7 @@ export function AppRouter() {
       >
         <Route index element={<Navigate to="/pacientes" replace />} />
         <Route path="/pacientes" element={<Pacientes />} />
+        <Route path="/pacientes/:id" element={<PatientDetail />} />
         <Route path="/relatorios" element={<Relatorios />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
       </Route>

@@ -4,6 +4,7 @@ import {
   UpdateSessionRequest,
   type SessionDto,
 } from '@physio-portal/contracts';
+import { ValidationError } from '../../shared/http/HttpError.js';
 import { asyncHandler } from '../../shared/http/asyncHandler.js';
 import { createAuthMiddleware } from '../../shared/middleware/authMiddleware.js';
 import { validate } from '../../shared/middleware/validate.js';
@@ -26,6 +27,19 @@ function toDto(s: Session): SessionDto {
 export function createSessionRouter(service: SessionService, signer: TokenSigner): Router {
   const r = Router();
   r.use(createAuthMiddleware(signer));
+
+  r.get(
+    '/patients/:id/sessions',
+    asyncHandler(async (req, res) => {
+      const parsed = GenerateSessionsRequest.safeParse(req.query);
+      if (!parsed.success) {
+        throw new ValidationError('Validation failed', parsed.error.issues);
+      }
+      const id = req.params.id as string;
+      const sessions = await service.listInRange(id, parsed.data.from, parsed.data.to);
+      res.json(sessions.map(toDto));
+    }),
+  );
 
   r.post(
     '/patients/:id/sessions/generate',
