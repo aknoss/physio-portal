@@ -23,6 +23,18 @@ export function createReportRouter(service: ReportService, signer: TokenSigner):
   );
 
   r.get(
+    '/reports/ranking',
+    asyncHandler(async (req, res) => {
+      const parsed = ReportRangeQuery.safeParse(req.query);
+      if (!parsed.success) {
+        throw new ValidationError('Validation failed', parsed.error.issues);
+      }
+      const ranking = await service.ranking(parsed.data.from, parsed.data.to);
+      res.json(ranking);
+    }),
+  );
+
+  r.get(
     '/reports/patient/:id',
     asyncHandler(async (req, res) => {
       const parsed = ReportRangeQuery.safeParse(req.query);

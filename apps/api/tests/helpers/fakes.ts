@@ -203,6 +203,7 @@ export class InMemorySessionRepository implements SessionRepository {
 }
 
 import type {
+  PatientRankingRow,
   ReportRepository,
   ReportTotals,
 } from '../../src/modules/reports/ReportRepository.js';
@@ -210,6 +211,7 @@ import type {
 export class InMemoryReportRepository implements ReportRepository {
   private readonly summaries = new Map<string, ReportTotals>();
   private readonly patientSummaries = new Map<string, ReportTotals>();
+  private readonly rankings = new Map<string, PatientRankingRow[]>();
 
   setSummary(from: string, to: string, totals: ReportTotals): void {
     this.summaries.set(`${from}|${to}`, { ...totals });
@@ -222,6 +224,10 @@ export class InMemoryReportRepository implements ReportRepository {
     totals: ReportTotals,
   ): void {
     this.patientSummaries.set(`${patientId}|${from}|${to}`, { ...totals });
+  }
+
+  setRanking(from: string, to: string, rows: PatientRankingRow[]): void {
+    this.rankings.set(`${from}|${to}`, rows.map((r) => ({ ...r })));
   }
 
   async summaryInRange(from: string, to: string): Promise<ReportTotals> {
@@ -239,6 +245,10 @@ export class InMemoryReportRepository implements ReportRepository {
         sessionCount: 0,
       }
     );
+  }
+
+  async rankingInRange(from: string, to: string): Promise<PatientRankingRow[]> {
+    return (this.rankings.get(`${from}|${to}`) ?? []).map((r) => ({ ...r }));
   }
 }
 

@@ -29,6 +29,15 @@ export const PatientReportDto = z.object({
   sessionCount: z.number().int().nonnegative(),
 });
 
+export const PatientRankingItemDto = z.object({
+  patientId: z.string().uuid(),
+  fullName: z.string(),
+  totalCents: z.number().int().nonnegative(),
+  sessionCount: z.number().int().nonnegative(),
+});
+
+export const PatientRankingDto = z.array(PatientRankingItemDto);
+
 export const MonthlyReportQuery = z.object({
   month: z
     .string()
@@ -38,4 +47,6 @@ export const MonthlyReportQuery = z.object({
 export type ReportRangeQuery = z.infer<typeof ReportRangeQuery>;
 export type ReportSummaryDto = z.infer<typeof ReportSummaryDto>;
 export type PatientReportDto = z.infer<typeof PatientReportDto>;
+export type PatientRankingItemDto = z.infer<typeof PatientRankingItemDto>;
+export type PatientRankingDto = z.infer<typeof PatientRankingDto>;
 export type MonthlyReportQuery = z.infer<typeof MonthlyReportQuery>;

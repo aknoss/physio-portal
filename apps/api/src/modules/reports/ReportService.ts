@@ -1,4 +1,5 @@
 import type {
+  PatientRankingDto,
   PatientReportDto,
   ReportSummaryDto,
 } from '@physio-portal/contracts';
@@ -27,6 +28,10 @@ export class ReportService {
   async summary(from: string, to: string): Promise<ReportSummaryDto> {
     const totals = await this.reports.summaryInRange(from, to);
     return { from, to, ...totals };
+  }
+
+  async ranking(from: string, to: string): Promise<PatientRankingDto> {
+    return this.reports.rankingInRange(from, to);
   }
 
   async patientSummary(

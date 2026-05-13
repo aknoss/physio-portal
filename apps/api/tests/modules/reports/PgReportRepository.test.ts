@@ -111,3 +111,57 @@ describe('PgReportRepository.patientSummaryInRange', () => {
     expect(result).toEqual({ totalCents: 0, sessionCount: 0 });
   });
 });
+
+describe('PgReportRepository.rankingInRange', () => {
+  it('returns an empty list when no patient has REALIZADA sessions in range', async () => {
+    const result = await reports.rankingInRange('2026-03-01', '2026-03-31');
+    expect(result).toEqual([]);
+  });
+
+  it('groups REALIZADA sessions by patient ordered by total desc', async () => {
+    const a = await patients.create({ ...samplePatient, fullName: 'Ana' });
+    const b = await patients.create({ ...samplePatient, fullName: 'Bruno' });
+    const c = await patients.create({ ...samplePatient, fullName: 'Caio' });
+    await seedSessions(a.id, [
+      { date: '2026-03-02', status: 'REALIZADA', priceCents: 12000 },
+      { date: '2026-03-09', status: 'REALIZADA', priceCents: 12000 },
+    ]);
+    await seedSessions(b.id, [
+      { date: '2026-03-03', status: 'REALIZADA', priceCents: 9000 },
+      { date: '2026-03-10', status: 'REALIZADA', priceCents: 9000 },
+      { date: '2026-03-17', status: 'REALIZADA', priceCents: 9000 },
+    ]);
+    await seedSessions(c.id, [
+      { date: '2026-03-04', status: 'FALTA', priceCents: 12000 },
+    ]);
+    const result = await reports.rankingInRange('2026-03-01', '2026-03-31');
+    expect(result).toEqual([
+      { patientId: b.id, fullName: 'Bruno', totalCents: 27000, sessionCount: 3 },
+      { patientId: a.id, fullName: 'Ana', totalCents: 24000, sessionCount: 2 },
+    ]);
+  });
+
+  it('breaks ties by full_name ascending', async () => {
+    const a = await patients.create({ ...samplePatient, fullName: 'Zora' });
+    const b = await patients.create({ ...samplePatient, fullName: 'Alma' });
+    await seedSessions(a.id, [
+      { date: '2026-03-02', status: 'REALIZADA', priceCents: 10000 },
+    ]);
+    await seedSessions(b.id, [
+      { date: '2026-03-02', status: 'REALIZADA', priceCents: 10000 },
+    ]);
+    const result = await reports.rankingInRange('2026-03-01', '2026-03-31');
+    expect(result.map((r) => r.fullName)).toEqual(['Alma', 'Zora']);
+  });
+
+  it('ignores non-REALIZADA statuses and out-of-range sessions', async () => {
+    const a = await patients.create(samplePatient);
+    await seedSessions(a.id, [
+      { date: '2026-02-28', status: 'REALIZADA', priceCents: 5000 },
+      { date: '2026-03-02', status: 'FALTA', priceCents: 12000 },
+      { date: '2026-04-01', status: 'REALIZADA', priceCents: 5000 },
+    ]);
+    const result = await reports.rankingInRange('2026-03-01', '2026-03-31');
+    expect(result).toEqual([]);
+  });
+});

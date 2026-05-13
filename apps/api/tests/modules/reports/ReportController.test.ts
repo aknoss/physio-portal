@@ -171,6 +171,48 @@ describe('GET /reports/summary', () => {
   });
 });
 
+describe('GET /reports/ranking', () => {
+  it('requires a token', async () => {
+    const res = await request(app).get('/reports/ranking?from=2026-03-01&to=2026-03-31');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns patients ordered by REALIZADA total desc', async () => {
+    const token = await login();
+    const a = await createPatient(token, 'Ana');
+    const b = await createPatient(token, 'Bruno');
+    await setupSchedule(token, a, [1], '2026-01-01');
+    await setupSchedule(token, b, [1, 3], '2026-01-01');
+    await generateAndMarkAll(token, a, '2026-03-01', '2026-03-31', 'REALIZADA');
+    await generateAndMarkAll(token, b, '2026-03-01', '2026-03-31', 'REALIZADA');
+    const res = await request(app)
+      .get('/reports/ranking?from=2026-03-01&to=2026-03-31')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      { patientId: b, fullName: 'Bruno', totalCents: 12000 * 9, sessionCount: 9 },
+      { patientId: a, fullName: 'Ana', totalCents: 12000 * 5, sessionCount: 5 },
+    ]);
+  });
+
+  it('returns an empty array when no patient billed in the range', async () => {
+    const token = await login();
+    const res = await request(app)
+      .get('/reports/ranking?from=2026-03-01&to=2026-03-31')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns 400 when from is after to', async () => {
+    const token = await login();
+    const res = await request(app)
+      .get('/reports/ranking?from=2026-04-01&to=2026-03-01')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('GET /reports/patient/:id', () => {
   it('returns per-patient totals for the range', async () => {
     const token = await login();

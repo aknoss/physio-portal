@@ -109,6 +109,27 @@ describe('ReportService.patientSummary', () => {
   });
 });
 
+describe('ReportService.ranking', () => {
+  it('returns the patient ranking from the repository', async () => {
+    const a = await patients.create({ ...samplePatient, fullName: 'Ana' });
+    const b = await patients.create({ ...samplePatient, fullName: 'Bruno' });
+    reports.setRanking('2026-03-01', '2026-03-31', [
+      { patientId: b.id, fullName: 'Bruno', totalCents: 36000, sessionCount: 3 },
+      { patientId: a.id, fullName: 'Ana', totalCents: 24000, sessionCount: 2 },
+    ]);
+    const result = await service.ranking('2026-03-01', '2026-03-31');
+    expect(result).toEqual([
+      { patientId: b.id, fullName: 'Bruno', totalCents: 36000, sessionCount: 3 },
+      { patientId: a.id, fullName: 'Ana', totalCents: 24000, sessionCount: 2 },
+    ]);
+  });
+
+  it('returns an empty list when no patient billed in the range', async () => {
+    const result = await service.ranking('2026-03-01', '2026-03-31');
+    expect(result).toEqual([]);
+  });
+});
+
 describe('ReportService.monthlyReport', () => {
   it('renders a PDF with patient, physio, REALIZADA sessions only, and the total', async () => {
     const patient = await patients.create(samplePatient);
