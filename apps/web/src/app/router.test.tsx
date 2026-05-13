@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../tests/msw/server';
 import { AuthProvider } from '../auth/AuthContext';
@@ -15,16 +16,25 @@ const USER = {
 };
 
 function renderAt(initial: string) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
-    <AuthProvider>
-      <MemoryRouter initialEntries={[initial]}>
-        <AppRouter />
-      </MemoryRouter>
-    </AuthProvider>,
+    <QueryClientProvider client={client}>
+      <AuthProvider>
+        <MemoryRouter initialEntries={[initial]}>
+          <AppRouter />
+        </MemoryRouter>
+      </AuthProvider>
+    </QueryClientProvider>,
   );
 }
 
 describe('AppRouter', () => {
+  beforeEach(() => {
+    server.use(http.get('/api/patients', () => HttpResponse.json([])));
+  });
+
   it('redirects an unauthenticated user from / to /login', async () => {
     renderAt('/');
     await waitFor(() =>
