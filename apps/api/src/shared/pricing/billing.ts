@@ -31,12 +31,12 @@ export function monthRangeFor(date: string): { from: string; to: string } {
   return { from: toISO(first), to: toISO(last) };
 }
 
-export function sumRealizadaCents(
+export function sumCompletedCents(
   sessions: ReadonlyArray<{ status: SessionStatus; priceCents: number }>,
 ): number {
   let total = 0;
   for (const s of sessions) {
-    if (s.status === 'REALIZADA') total += s.priceCents;
+    if (s.status === 'COMPLETED') total += s.priceCents;
   }
   return total;
 }

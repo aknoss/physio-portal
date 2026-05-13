@@ -4,10 +4,10 @@ const isoDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be ISO 8601 calendar date (YYYY-MM-DD)');
 
-export const SessionStatus = z.enum(['SCHEDULED', 'REALIZADA', 'FALTA', 'REMARCADA']);
+export const SessionStatus = z.enum(['SCHEDULED', 'COMPLETED', 'MISSED', 'RESCHEDULED']);
 export type SessionStatus = z.infer<typeof SessionStatus>;
 
-export const UpdatableSessionStatus = z.enum(['REALIZADA', 'FALTA', 'REMARCADA']);
+export const UpdatableSessionStatus = z.enum(['COMPLETED', 'MISSED', 'RESCHEDULED']);
 export type UpdatableSessionStatus = z.infer<typeof UpdatableSessionStatus>;
 
 export const UpdateSessionRequest = z

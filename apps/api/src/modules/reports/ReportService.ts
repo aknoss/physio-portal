@@ -6,7 +6,7 @@ import type {
 import { basename } from 'node:path';
 import type { Clock } from '../../shared/clock/Clock.js';
 import { NotFoundError } from '../../shared/http/HttpError.js';
-import { monthRangeFor, sumRealizadaCents } from '../../shared/pricing/billing.js';
+import { monthRangeFor, sumCompletedCents } from '../../shared/pricing/billing.js';
 import type { FileStorage } from '../../shared/storage/FileStorage.js';
 import type { PdfRenderer } from '../../infra/pdf/PdfRenderer.js';
 import type { PatientRepository } from '../patients/PatientRepository.js';
@@ -57,8 +57,8 @@ export class ReportService {
 
     const { from, to } = monthRangeFor(`${month}-01`);
     const all = await this.sessions.listByPatientInRange(patientId, from, to);
-    const realizadas = all.filter((s) => s.status === 'REALIZADA');
-    const totalCents = sumRealizadaCents(realizadas);
+    const completed = all.filter((s) => s.status === 'COMPLETED');
+    const totalCents = sumCompletedCents(completed);
 
     let signature: Buffer | null = null;
     if (physio.signatureUrl) {
@@ -74,7 +74,7 @@ export class ReportService {
         phone: patient.phone,
       },
       month,
-      sessions: realizadas.map((s) => ({ date: s.date, priceCents: s.priceCents })),
+      sessions: completed.map((s) => ({ date: s.date, priceCents: s.priceCents })),
       totalCents,
       issuedAt: this.clock.now(),
     });

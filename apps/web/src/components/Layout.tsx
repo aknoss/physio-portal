@@ -2,9 +2,9 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 const NAV = [
-  { to: '/pacientes', label: 'Pacientes' },
-  { to: '/relatorios', label: 'Relatórios' },
-  { to: '/configuracoes', label: 'Configurações' },
+  { to: '/patients', label: 'Pacientes' },
+  { to: '/reports', label: 'Relatórios' },
+  { to: '/settings', label: 'Configurações' },
 ];
 
 export function Layout() {

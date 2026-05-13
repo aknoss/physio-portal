@@ -107,10 +107,10 @@ describe('PgSessionRepository', () => {
       { patientId: patient.id, date: '2026-03-02', priceCents: 12000 },
     ]);
     const updated = await sessions.update(created!.id, {
-      status: 'REALIZADA',
+      status: 'COMPLETED',
       note: 'ok',
     });
-    expect(updated?.status).toBe('REALIZADA');
+    expect(updated?.status).toBe('COMPLETED');
     expect(updated?.note).toBe('ok');
   });
 
@@ -136,7 +136,7 @@ describe('PgSessionRepository', () => {
 
   it('update returns null for an unknown id', async () => {
     const result = await sessions.update('00000000-0000-0000-0000-000000000000', {
-      status: 'REALIZADA',
+      status: 'COMPLETED',
     });
     expect(result).toBeNull();
   });

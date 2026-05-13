@@ -25,7 +25,7 @@ export class PgReportRepository implements ReportRepository {
       `SELECT COALESCE(SUM(price_cents), 0)::bigint AS total_cents,
               COUNT(*)::bigint AS session_count
          FROM sessions
-        WHERE status = 'REALIZADA'
+        WHERE status = 'COMPLETED'
           AND date BETWEEN $1 AND $2`,
       [from, to],
     );
@@ -41,7 +41,7 @@ export class PgReportRepository implements ReportRepository {
       `SELECT COALESCE(SUM(price_cents), 0)::bigint AS total_cents,
               COUNT(*)::bigint AS session_count
          FROM sessions
-        WHERE status = 'REALIZADA'
+        WHERE status = 'COMPLETED'
           AND patient_id = $1
           AND date BETWEEN $2 AND $3`,
       [patientId, from, to],
@@ -62,7 +62,7 @@ export class PgReportRepository implements ReportRepository {
               COUNT(s.id)::bigint AS session_count
          FROM patients p
          JOIN sessions s ON s.patient_id = p.id
-        WHERE s.status = 'REALIZADA'
+        WHERE s.status = 'COMPLETED'
           AND s.date BETWEEN $1 AND $2
         GROUP BY p.id, p.full_name
         ORDER BY total_cents DESC, p.full_name ASC`,

@@ -191,7 +191,7 @@ describe('SessionService.listInRange', () => {
 });
 
 describe('SessionService.updateStatus', () => {
-  it('marks a SCHEDULED session as REALIZADA', async () => {
+  it('marks a SCHEDULED session as COMPLETED', async () => {
     const patient = await patients.create(samplePatient);
     await schedules.upsert({
       patientId: patient.id,
@@ -200,12 +200,12 @@ describe('SessionService.updateStatus', () => {
       endDate: null,
     });
     const [created] = await service.generate(patient.id, '2026-03-02', '2026-03-02');
-    const updated = await service.updateStatus(created!.id, { status: 'REALIZADA' });
-    expect(updated.status).toBe('REALIZADA');
+    const updated = await service.updateStatus(created!.id, { status: 'COMPLETED' });
+    expect(updated.status).toBe('COMPLETED');
     expect(updated.id).toBe(created!.id);
   });
 
-  it('marks a session as FALTA with a note', async () => {
+  it('marks a session as MISSED with a note', async () => {
     const patient = await patients.create(samplePatient);
     await schedules.upsert({
       patientId: patient.id,
@@ -215,10 +215,10 @@ describe('SessionService.updateStatus', () => {
     });
     const [created] = await service.generate(patient.id, '2026-03-02', '2026-03-02');
     const updated = await service.updateStatus(created!.id, {
-      status: 'FALTA',
+      status: 'MISSED',
       note: 'paciente avisou',
     });
-    expect(updated.status).toBe('FALTA');
+    expect(updated.status).toBe('MISSED');
     expect(updated.note).toBe('paciente avisou');
   });
 
@@ -259,14 +259,14 @@ describe('SessionService.updateStatus', () => {
       endDate: null,
     });
     const [created] = await service.generate(patient.id, '2026-03-02', '2026-03-02');
-    await service.updateStatus(created!.id, { status: 'REALIZADA' });
-    const corrected = await service.updateStatus(created!.id, { status: 'FALTA' });
-    expect(corrected.status).toBe('FALTA');
+    await service.updateStatus(created!.id, { status: 'COMPLETED' });
+    const corrected = await service.updateStatus(created!.id, { status: 'MISSED' });
+    expect(corrected.status).toBe('MISSED');
   });
 
   it('throws NotFoundError when the session does not exist', async () => {
     await expect(
-      service.updateStatus('00000000-0000-0000-0000-000000000000', { status: 'REALIZADA' }),
+      service.updateStatus('00000000-0000-0000-0000-000000000000', { status: 'COMPLETED' }),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 });

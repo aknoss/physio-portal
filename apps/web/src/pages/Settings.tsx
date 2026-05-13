@@ -10,7 +10,7 @@ type ProfileForm = {
   cref: string;
 };
 
-export function Configuracoes() {
+export function Settings() {
   const { user, refresh } = useAuth();
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const [signatureMessage, setSignatureMessage] = useState<string | null>(null);

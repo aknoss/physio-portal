@@ -105,7 +105,7 @@ async function generateAndMarkAll(
   patientId: string,
   from: string,
   to: string,
-  status: 'REALIZADA' | 'FALTA' | 'REMARCADA',
+  status: 'COMPLETED' | 'MISSED' | 'RESCHEDULED',
 ): Promise<void> {
   const res = await request(app)
     .post(`/patients/${patientId}/sessions/generate`)
@@ -140,8 +140,8 @@ describe('GET /reports/summary', () => {
     const b = await createPatient(token, 'B');
     await setupSchedule(token, a, [1], '2026-01-01');
     await setupSchedule(token, b, [3], '2026-01-01');
-    await generateAndMarkAll(token, a, '2026-03-01', '2026-03-31', 'REALIZADA');
-    await generateAndMarkAll(token, b, '2026-03-01', '2026-03-31', 'REALIZADA');
+    await generateAndMarkAll(token, a, '2026-03-01', '2026-03-31', 'COMPLETED');
+    await generateAndMarkAll(token, b, '2026-03-01', '2026-03-31', 'COMPLETED');
     const res = await request(app)
       .get('/reports/summary?from=2026-03-01&to=2026-03-31')
       .set('Authorization', `Bearer ${token}`);
@@ -177,14 +177,14 @@ describe('GET /reports/ranking', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns patients ordered by REALIZADA total desc', async () => {
+  it('returns patients ordered by COMPLETED total desc', async () => {
     const token = await login();
     const a = await createPatient(token, 'Ana');
     const b = await createPatient(token, 'Bruno');
     await setupSchedule(token, a, [1], '2026-01-01');
     await setupSchedule(token, b, [1, 3], '2026-01-01');
-    await generateAndMarkAll(token, a, '2026-03-01', '2026-03-31', 'REALIZADA');
-    await generateAndMarkAll(token, b, '2026-03-01', '2026-03-31', 'REALIZADA');
+    await generateAndMarkAll(token, a, '2026-03-01', '2026-03-31', 'COMPLETED');
+    await generateAndMarkAll(token, b, '2026-03-01', '2026-03-31', 'COMPLETED');
     const res = await request(app)
       .get('/reports/ranking?from=2026-03-01&to=2026-03-31')
       .set('Authorization', `Bearer ${token}`);
@@ -218,7 +218,7 @@ describe('GET /reports/patient/:id', () => {
     const token = await login();
     const id = await createPatient(token);
     await setupSchedule(token, id, [1], '2026-01-01');
-    await generateAndMarkAll(token, id, '2026-03-01', '2026-03-31', 'REALIZADA');
+    await generateAndMarkAll(token, id, '2026-03-01', '2026-03-31', 'COMPLETED');
     const res = await request(app)
       .get(`/reports/patient/${id}?from=2026-03-01&to=2026-03-31`)
       .set('Authorization', `Bearer ${token}`);
@@ -264,7 +264,7 @@ describe('GET /reports/patient/:id/monthly.pdf', () => {
     const token = await login();
     const patientId = await createPatient(token, 'Pedro Silva');
     await setupSchedule(token, patientId, [1], '2026-01-01');
-    await generateAndMarkAll(token, patientId, '2026-03-01', '2026-03-31', 'REALIZADA');
+    await generateAndMarkAll(token, patientId, '2026-03-01', '2026-03-31', 'COMPLETED');
 
     const res = await request(app)
       .get(`/reports/patient/${patientId}/monthly.pdf?month=2026-03`)
@@ -300,7 +300,7 @@ describe('GET /reports/patient/:id/monthly.pdf', () => {
 
     const patientId = await createPatient(token);
     await setupSchedule(token, patientId, [1], '2026-01-01');
-    await generateAndMarkAll(token, patientId, '2026-03-01', '2026-03-31', 'REALIZADA');
+    await generateAndMarkAll(token, patientId, '2026-03-01', '2026-03-31', 'COMPLETED');
 
     const res = await request(app)
       .get(`/reports/patient/${patientId}/monthly.pdf?month=2026-03`)

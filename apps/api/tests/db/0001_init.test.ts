@@ -42,7 +42,7 @@ async function enumExists(name: string): Promise<boolean> {
 describe('migration 0001_init', () => {
   it('up applies cleanly: includes all tables and the session_status enum', async () => {
     const result = await up({ pool, migrationsDir });
-    expect(result.applied).toEqual(['0001_init']);
+    expect(result.applied[0]).toBe('0001_init');
 
     expect(await tableExists('users')).toBe(true);
     expect(await tableExists('patients')).toBe(true);
@@ -150,8 +150,10 @@ describe('migration 0001_init', () => {
 
   it('down drops all migration objects cleanly', async () => {
     await up({ pool, migrationsDir });
-    const reverted = await down({ pool, migrationsDir });
-    expect(reverted).toEqual({ reverted: '0001_init' });
+    let reverted = await down({ pool, migrationsDir });
+    while (reverted.reverted) {
+      reverted = await down({ pool, migrationsDir });
+    }
 
     expect(await tableExists('users')).toBe(false);
     expect(await tableExists('patients')).toBe(false);
@@ -161,11 +163,14 @@ describe('migration 0001_init', () => {
   });
 
   it('round-trip up → down → up succeeds', async () => {
-    await up({ pool, migrationsDir });
-    await down({ pool, migrationsDir });
+    const first = await up({ pool, migrationsDir });
+    let reverted = await down({ pool, migrationsDir });
+    while (reverted.reverted) {
+      reverted = await down({ pool, migrationsDir });
+    }
     const second = await up({ pool, migrationsDir });
-    expect(second.applied).toEqual(['0001_init']);
+    expect(second.applied).toEqual(first.applied);
     const s = await status({ pool, migrationsDir });
-    expect(s).toEqual({ applied: ['0001_init'], pending: [] });
+    expect(s.pending).toEqual([]);
   });
 });

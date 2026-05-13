@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../tests/msw/server';
 import { AuthProvider } from '../auth/AuthContext';
-import { Configuracoes } from './Configuracoes';
+import { Settings } from './Settings';
 
 const USER = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -25,14 +25,14 @@ function setup() {
     <QueryClientProvider client={client}>
       <AuthProvider>
         <MemoryRouter>
-          <Configuracoes />
+          <Settings />
         </MemoryRouter>
       </AuthProvider>
     </QueryClientProvider>,
   );
 }
 
-describe('Configuracoes page', () => {
+describe('Settings page', () => {
   it('pre-fills the form with the current physiotherapist profile', async () => {
     server.use(http.get('/api/auth/me', () => HttpResponse.json(USER)));
     setup();

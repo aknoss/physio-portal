@@ -82,7 +82,7 @@ function defaultHandlers(opts: {
   ];
 }
 
-function setup(initial = `/pacientes/${PATIENT_ID}`) {
+function setup(initial = `/patients/${PATIENT_ID}`) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -90,8 +90,8 @@ function setup(initial = `/pacientes/${PATIENT_ID}`) {
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[initial]}>
         <Routes>
-          <Route path="/pacientes/:id" element={<PatientDetail />} />
-          <Route path="/pacientes" element={<p>lista</p>} />
+          <Route path="/patients/:id" element={<PatientDetail />} />
+          <Route path="/patients" element={<p>lista</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -177,21 +177,21 @@ describe('PatientDetail page', () => {
 
   it('renders the calendar with status-colored cells for the current month', async () => {
     const sessions = [
-      makeSession('2026-03-02', 'REALIZADA'),
-      makeSession('2026-03-04', 'FALTA'),
+      makeSession('2026-03-02', 'COMPLETED'),
+      makeSession('2026-03-04', 'MISSED'),
       makeSession('2026-03-09', 'SCHEDULED'),
-      makeSession('2026-03-11', 'REMARCADA'),
+      makeSession('2026-03-11', 'RESCHEDULED'),
     ];
     server.use(...defaultHandlers({ sessions }));
     setup();
     await screen.findByTestId('session-cell-2026-03-02');
     expect(screen.getByTestId('session-cell-2026-03-02')).toHaveAttribute(
       'data-status',
-      'REALIZADA',
+      'COMPLETED',
     );
     expect(screen.getByTestId('session-cell-2026-03-04')).toHaveAttribute(
       'data-status',
-      'FALTA',
+      'MISSED',
     );
     expect(screen.getByTestId('session-cell-2026-03-09')).toHaveAttribute(
       'data-status',
@@ -199,7 +199,7 @@ describe('PatientDetail page', () => {
     );
     expect(screen.getByTestId('session-cell-2026-03-11')).toHaveAttribute(
       'data-status',
-      'REMARCADA',
+      'RESCHEDULED',
     );
   });
 
@@ -213,7 +213,7 @@ describe('PatientDetail page', () => {
         expect(params.id).toBe('session-2026-03-09');
         return HttpResponse.json({
           ...sessions[0]!,
-          status: 'REALIZADA',
+          status: 'COMPLETED',
         });
       }),
     );
@@ -222,7 +222,7 @@ describe('PatientDetail page', () => {
     await userEvent.click(cell);
     const dialog = await screen.findByRole('dialog');
     await userEvent.click(within(dialog).getByRole('button', { name: /realizada/i }));
-    await waitFor(() => expect(patched).toEqual({ status: 'REALIZADA' }));
+    await waitFor(() => expect(patched).toEqual({ status: 'COMPLETED' }));
   });
 
   it('generates this month’s sessions when the button is clicked', async () => {

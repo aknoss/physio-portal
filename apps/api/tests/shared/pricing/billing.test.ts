@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   monthRangeFor,
-  sumRealizadaCents,
+  sumCompletedCents,
   weekRangeFor,
 } from '../../../src/shared/pricing/billing.js';
 
@@ -79,28 +79,28 @@ describe('monthRangeFor', () => {
   });
 });
 
-describe('sumRealizadaCents', () => {
+describe('sumCompletedCents', () => {
   it('returns 0 for an empty list', () => {
-    expect(sumRealizadaCents([])).toBe(0);
+    expect(sumCompletedCents([])).toBe(0);
   });
 
-  it('sums only REALIZADA sessions', () => {
+  it('sums only COMPLETED sessions', () => {
     expect(
-      sumRealizadaCents([
-        { status: 'REALIZADA', priceCents: 12000 },
-        { status: 'FALTA', priceCents: 12000 },
-        { status: 'REMARCADA', priceCents: 12000 },
+      sumCompletedCents([
+        { status: 'COMPLETED', priceCents: 12000 },
+        { status: 'MISSED', priceCents: 12000 },
+        { status: 'RESCHEDULED', priceCents: 12000 },
         { status: 'SCHEDULED', priceCents: 12000 },
-        { status: 'REALIZADA', priceCents: 8000 },
+        { status: 'COMPLETED', priceCents: 8000 },
       ]),
     ).toBe(20000);
   });
 
-  it('returns 0 when no session is REALIZADA', () => {
+  it('returns 0 when no session is COMPLETED', () => {
     expect(
-      sumRealizadaCents([
-        { status: 'FALTA', priceCents: 12000 },
-        { status: 'REMARCADA', priceCents: 12000 },
+      sumCompletedCents([
+        { status: 'MISSED', priceCents: 12000 },
+        { status: 'RESCHEDULED', priceCents: 12000 },
         { status: 'SCHEDULED', priceCents: 12000 },
       ]),
     ).toBe(0);

@@ -42,7 +42,7 @@ describe('AppRouter', () => {
     );
   });
 
-  it('routes / to /pacientes when authenticated', async () => {
+  it('routes / to /patients when authenticated', async () => {
     window.localStorage.setItem('physio.token', 'tok');
     server.use(http.get('/api/auth/me', () => HttpResponse.json(USER)));
     renderAt('/');
@@ -56,7 +56,7 @@ describe('AppRouter', () => {
   it('renders the Relatórios page', async () => {
     window.localStorage.setItem('physio.token', 'tok');
     server.use(http.get('/api/auth/me', () => HttpResponse.json(USER)));
-    renderAt('/relatorios');
+    renderAt('/reports');
     await waitFor(() =>
       expect(
         screen.getByRole('heading', { name: /relatórios/i }),
@@ -67,7 +67,7 @@ describe('AppRouter', () => {
   it('renders the Configurações page', async () => {
     window.localStorage.setItem('physio.token', 'tok');
     server.use(http.get('/api/auth/me', () => HttpResponse.json(USER)));
-    renderAt('/configuracoes');
+    renderAt('/settings');
     await waitFor(() =>
       expect(
         screen.getByRole('heading', { name: /configurações/i }),

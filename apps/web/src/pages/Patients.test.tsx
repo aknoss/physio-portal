@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { http, HttpResponse } from 'msw';
 import type { PatientDto } from '@physio-portal/contracts';
 import { server } from '../../tests/msw/server';
-import { Pacientes } from './Pacientes';
+import { Patients } from './Patients';
 
 const ANA: PatientDto = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -37,13 +37,13 @@ function setup() {
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <Pacientes />
+        <Patients />
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
-describe('Pacientes page', () => {
+describe('Patients page', () => {
   it('renders patient cards from the API', async () => {
     server.use(
       http.get('/api/patients', () => HttpResponse.json([ANA, BRUNO])),

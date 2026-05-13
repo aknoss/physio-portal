@@ -44,7 +44,7 @@ function triggerDownload(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function RelatorioMensal() {
+export function MonthlyReport() {
   const [patientId, setPatientId] = useState('');
   const [month, setMonth] = useState(() => defaultMonth(new Date()));
 
@@ -70,7 +70,7 @@ export function RelatorioMensal() {
   return (
     <section className="space-y-4">
       <header className="space-y-2">
-        <Link to="/relatorios" className="text-sm text-slate-600 hover:underline">
+        <Link to="/reports" className="text-sm text-slate-600 hover:underline">
           ← Voltar
         </Link>
         <h1 className="text-2xl font-semibold">Relatório mensal</h1>

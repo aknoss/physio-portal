@@ -51,11 +51,11 @@ describe('sessions api client', () => {
       http.patch('/api/sessions/:id', async ({ request, params }) => {
         receivedBody = await request.json();
         expect(params.id).toBe(SESSION_ID);
-        return HttpResponse.json({ ...SESSION, status: 'REALIZADA' });
+        return HttpResponse.json({ ...SESSION, status: 'COMPLETED' });
       }),
     );
-    const result = await updateSession(SESSION_ID, { status: 'REALIZADA' });
-    expect(result.status).toBe('REALIZADA');
-    expect(receivedBody).toEqual({ status: 'REALIZADA' });
+    const result = await updateSession(SESSION_ID, { status: 'COMPLETED' });
+    expect(result.status).toBe('COMPLETED');
+    expect(receivedBody).toEqual({ status: 'COMPLETED' });
   });
 });

@@ -31,10 +31,10 @@ function setup(initial = '/') {
             }
           >
             <Route index element={<p>conteúdo</p>} />
-            <Route path="pacientes" element={<p>página de pacientes</p>} />
-            <Route path="relatorios" element={<p>página de relatórios</p>} />
+            <Route path="patients" element={<p>página de pacientes</p>} />
+            <Route path="reports" element={<p>página de relatórios</p>} />
             <Route
-              path="configuracoes"
+              path="settings"
               element={<p>página de configurações</p>}
             />
           </Route>

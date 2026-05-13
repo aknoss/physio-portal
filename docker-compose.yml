@@ -16,13 +16,18 @@ services:
       retries: 10
 
   api:
-    image: physio-portal-api:dev
+    image: physio-portal-api:latest
     build:
       context: .
       dockerfile: apps/api/Dockerfile
     environment:
       DATABASE_URL: postgres://physio:physio@postgres:5432/physio
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       PORT: "3000"
+      SEED_EMAIL: ${SEED_EMAIL:-fisio@example.com}
+      SEED_PASSWORD: ${SEED_PASSWORD:-changeme}
+      SEED_FULL_NAME: ${SEED_FULL_NAME:-Dra. Raiany}
+      SEED_CREF: ${SEED_CREF:-CREFITO-99999}
     ports:
       - "3000:3000"
     depends_on:
@@ -30,20 +35,16 @@ services:
         condition: service_healthy
     volumes:
       - api-uploads:/app/apps/api/uploads
-    profiles: ["full"]
 
   web:
-    image: physio-portal-web:dev
+    image: physio-portal-web:latest
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    environment:
-      VITE_API_URL: http://localhost:3000
     ports:
-      - "5173:5173"
+      - "5173:80"
     depends_on:
       - api
-    profiles: ["full"]
 
 volumes:
   postgres-data:

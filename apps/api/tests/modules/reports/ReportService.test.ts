@@ -131,7 +131,7 @@ describe('ReportService.ranking', () => {
 });
 
 describe('ReportService.monthlyReport', () => {
-  it('renders a PDF with patient, physio, REALIZADA sessions only, and the total', async () => {
+  it('renders a PDF with patient, physio, COMPLETED sessions only, and the total', async () => {
     const patient = await patients.create(samplePatient);
     const created = await sessions.bulkCreateScheduled([
       { patientId: patient.id, date: '2026-03-02', priceCents: 12000 },
@@ -139,10 +139,10 @@ describe('ReportService.monthlyReport', () => {
       { patientId: patient.id, date: '2026-03-16', priceCents: 12000 },
       { patientId: patient.id, date: '2026-03-23', priceCents: 12000 },
     ]);
-    await sessions.update(created[0]!.id, { status: 'REALIZADA' });
-    await sessions.update(created[1]!.id, { status: 'REALIZADA' });
-    await sessions.update(created[2]!.id, { status: 'FALTA' });
-    await sessions.update(created[3]!.id, { status: 'REMARCADA' });
+    await sessions.update(created[0]!.id, { status: 'COMPLETED' });
+    await sessions.update(created[1]!.id, { status: 'COMPLETED' });
+    await sessions.update(created[2]!.id, { status: 'MISSED' });
+    await sessions.update(created[3]!.id, { status: 'RESCHEDULED' });
 
     const buffer = await service.monthlyReport(physioUserId, patient.id, '2026-03');
     expect(buffer.toString()).toBe('pdf:2026-03');
@@ -199,7 +199,7 @@ describe('ReportService.monthlyReport', () => {
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
-  it('returns an empty session list and zero total when no REALIZADA in the month', async () => {
+  it('returns an empty session list and zero total when no COMPLETED in the month', async () => {
     const patient = await patients.create(samplePatient);
     await sessions.bulkCreateScheduled([
       { patientId: patient.id, date: '2026-03-02', priceCents: 12000 },

@@ -25,7 +25,7 @@ function whatsappHref(phone: string): string {
   return `https://wa.me/${phone.replace(/\D/g, '')}`;
 }
 
-export function Pacientes() {
+export function Patients() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('active');
@@ -150,7 +150,7 @@ export function Pacientes() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h2 className="font-semibold">
-                    <Link to={`/pacientes/${p.id}`} className="hover:underline">
+                    <Link to={`/patients/${p.id}`} className="hover:underline">
                       {p.fullName}
                     </Link>
                   </h2>

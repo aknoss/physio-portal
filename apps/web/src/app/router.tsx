@@ -2,11 +2,11 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { RequireAuth } from '../auth/RequireAuth';
 import { Login } from '../pages/Login';
-import { Pacientes } from '../pages/Pacientes';
+import { Patients } from '../pages/Patients';
 import { PatientDetail } from '../pages/PatientDetail';
-import { Relatorios } from '../pages/Relatorios';
-import { RelatorioMensal } from '../pages/RelatorioMensal';
-import { Configuracoes } from '../pages/Configuracoes';
+import { Reports } from '../pages/Reports';
+import { MonthlyReport } from '../pages/MonthlyReport';
+import { Settings } from '../pages/Settings';
 
 export function AppRouter() {
   return (
@@ -19,12 +19,12 @@ export function AppRouter() {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to="/pacientes" replace />} />
-        <Route path="/pacientes" element={<Pacientes />} />
-        <Route path="/pacientes/:id" element={<PatientDetail />} />
-        <Route path="/relatorios" element={<Relatorios />} />
-        <Route path="/relatorios/mensal" element={<RelatorioMensal />} />
-        <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route index element={<Navigate to="/patients" replace />} />
+        <Route path="/patients" element={<Patients />} />
+        <Route path="/patients/:id" element={<PatientDetail />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/reports/monthly" element={<MonthlyReport />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

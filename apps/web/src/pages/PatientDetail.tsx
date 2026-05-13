@@ -14,9 +14,16 @@ const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 const STATUS_STYLES: Record<SessionDto['status'], string> = {
   SCHEDULED: 'bg-slate-200 text-slate-800',
-  REALIZADA: 'bg-emerald-200 text-emerald-900',
-  FALTA: 'bg-red-200 text-red-900',
-  REMARCADA: 'bg-amber-200 text-amber-900',
+  COMPLETED: 'bg-emerald-200 text-emerald-900',
+  MISSED: 'bg-red-200 text-red-900',
+  RESCHEDULED: 'bg-amber-200 text-amber-900',
+};
+
+const STATUS_LABELS: Record<SessionDto['status'], string> = {
+  SCHEDULED: 'Agendada',
+  COMPLETED: 'Realizada',
+  MISSED: 'Falta',
+  RESCHEDULED: 'Remarcada',
 };
 
 const priceFormatter = new Intl.NumberFormat('pt-BR', {
@@ -160,7 +167,7 @@ export function PatientDetail() {
   return (
     <section className="space-y-6">
       <header className="space-y-2">
-        <Link to="/pacientes" className="text-sm text-slate-600 hover:underline">
+        <Link to="/patients" className="text-sm text-slate-600 hover:underline">
           ← Voltar
         </Link>
         {patient && (
@@ -325,13 +332,13 @@ export function PatientDetail() {
               Sessão de {selectedSession.date}
             </h2>
             <p className="text-sm text-slate-600">
-              Status atual: <strong>{selectedSession.status}</strong>
+              Status atual: <strong>{STATUS_LABELS[selectedSession.status]}</strong>
             </p>
             <div className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={() =>
-                  setStatus.mutate({ id: selectedSession.id, status: 'REALIZADA' })
+                  setStatus.mutate({ id: selectedSession.id, status: 'COMPLETED' })
                 }
                 className="rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white"
               >
@@ -340,7 +347,7 @@ export function PatientDetail() {
               <button
                 type="button"
                 onClick={() =>
-                  setStatus.mutate({ id: selectedSession.id, status: 'FALTA' })
+                  setStatus.mutate({ id: selectedSession.id, status: 'MISSED' })
                 }
                 className="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white"
               >
@@ -349,7 +356,7 @@ export function PatientDetail() {
               <button
                 type="button"
                 onClick={() =>
-                  setStatus.mutate({ id: selectedSession.id, status: 'REMARCADA' })
+                  setStatus.mutate({ id: selectedSession.id, status: 'RESCHEDULED' })
                 }
                 className="rounded bg-amber-600 px-3 py-2 text-sm font-medium text-white"
               >

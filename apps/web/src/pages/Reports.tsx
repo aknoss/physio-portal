@@ -33,7 +33,7 @@ function weekRange(d: Date): { from: string; to: string } {
   return { from: toYmd(start), to: toYmd(end) };
 }
 
-export function Relatorios() {
+export function Reports() {
   const today = useMemo(() => new Date(), []);
   const month = useMemo(() => monthRange(today), [today]);
   const week = useMemo(() => weekRange(today), [today]);
@@ -56,7 +56,7 @@ export function Relatorios() {
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Relatórios</h1>
         <Link
-          to="/relatorios/mensal"
+          to="/reports/monthly"
           className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white"
         >
           Relatório mensal por paciente
@@ -111,7 +111,7 @@ export function Relatorios() {
                 <tr key={row.patientId} className="border-t border-slate-100">
                   <td className="py-2">
                     <Link
-                      to={`/pacientes/${row.patientId}`}
+                      to={`/patients/${row.patientId}`}
                       className="hover:underline"
                     >
                       {row.fullName}

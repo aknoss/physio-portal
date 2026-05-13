@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import type { PatientDto } from '@physio-portal/contracts';
 import { server } from '../../tests/msw/server';
-import { RelatorioMensal } from './RelatorioMensal';
+import { MonthlyReport } from './MonthlyReport';
 
 const ANA: PatientDto = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -26,7 +26,7 @@ function setup() {
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <RelatorioMensal />
+        <MonthlyReport />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -41,7 +41,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('RelatorioMensal page', () => {
+describe('MonthlyReport page', () => {
   it('renders the patient selector populated from the API', async () => {
     server.use(http.get('/api/patients', () => HttpResponse.json([ANA])));
     setup();

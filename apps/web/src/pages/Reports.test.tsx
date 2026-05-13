@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../tests/msw/server';
-import { Relatorios } from './Relatorios';
+import { Reports } from './Reports';
 
 function setup() {
   const client = new QueryClient({
@@ -13,7 +13,7 @@ function setup() {
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <Relatorios />
+        <Reports />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -28,7 +28,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('Relatorios dashboard', () => {
+describe('Reports dashboard', () => {
   it('renders weekly and monthly totals using current ranges', async () => {
     server.use(
       http.get('/api/reports/summary', ({ request }) => {
@@ -109,6 +109,6 @@ describe('Relatorios dashboard', () => {
     );
     setup();
     const link = await screen.findByRole('link', { name: /relatório mensal/i });
-    expect(link).toHaveAttribute('href', '/relatorios/mensal');
+    expect(link).toHaveAttribute('href', '/reports/monthly');
   });
 });
