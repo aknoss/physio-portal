@@ -17,7 +17,7 @@ async function extractText(buffer: Buffer): Promise<string> {
 }
 
 const baseInput: MonthlyReportInput = {
-  physio: { fullName: 'Dra. Raiany', cref: 'CREFITO-12345' },
+  physio: { fullName: 'Raiany', cref: 'CREFITO-12345' },
   signature: null,
   patient: {
     fullName: 'Pedro Silva',
@@ -46,7 +46,7 @@ describe('PdfKitRenderer.renderMonthlyReport', () => {
     const renderer = new PdfKitRenderer();
     const buffer = await renderer.renderMonthlyReport(baseInput);
     const text = await extractText(buffer);
-    expect(text).toContain('Dra. Raiany');
+    expect(text).toContain('Raiany');
     expect(text).toContain('CREFITO-12345');
     expect(text).toContain('Pedro Silva');
     expect(text).toContain('Rua A, 123');

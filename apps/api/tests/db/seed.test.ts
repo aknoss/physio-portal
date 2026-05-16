@@ -13,7 +13,7 @@ beforeEach(() => {
 const input = {
   email: 'fisio@example.com',
   password: 'senha123',
-  fullName: 'Dra. Raiany',
+  fullName: 'Raiany',
   cref: 'CREFITO-99999',
 };
 
@@ -24,7 +24,7 @@ describe('seed', () => {
     const stored = await users.findByEmail(input.email);
     expect(stored).not.toBeNull();
     expect(stored?.passwordHash).toBe('hashed:senha123');
-    expect(stored?.fullName).toBe('Dra. Raiany');
+    expect(stored?.fullName).toBe('Raiany');
     expect(stored?.cref).toBe('CREFITO-99999');
   });
 

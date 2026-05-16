@@ -7,7 +7,7 @@ let repo: InMemoryPatientRepository;
 let service: PatientService;
 
 const baseInput = {
-  fullName: 'Raiany Silva',
+  fullName: 'Raiany',
   address: 'Rua A, 123',
   phone: '+5521987654321',
   sessionPriceCents: 12000,
@@ -24,7 +24,7 @@ describe('PatientService.create', () => {
     const created = await service.create(baseInput);
     expect(created.id).toBeDefined();
     expect(created.active).toBe(true);
-    expect(created.fullName).toBe('Raiany Silva');
+    expect(created.fullName).toBe('Raiany');
     expect(created.notes).toBeNull();
   });
 
@@ -85,8 +85,8 @@ describe('PatientService.list', () => {
 describe('PatientService.update', () => {
   it('updates the provided fields and leaves others untouched', async () => {
     const created = await service.create(baseInput);
-    const updated = await service.update(created.id, { fullName: 'Raiany S.' });
-    expect(updated.fullName).toBe('Raiany S.');
+    const updated = await service.update(created.id, { fullName: 'Raiany' });
+    expect(updated.fullName).toBe('Raiany');
     expect(updated.address).toBe(baseInput.address);
   });
 

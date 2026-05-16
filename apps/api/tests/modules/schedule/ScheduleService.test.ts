@@ -7,7 +7,7 @@ import {
 } from '../../helpers/fakes.js';
 
 const samplePatient = {
-  fullName: 'Raiany Silva',
+  fullName: 'Raiany',
   address: 'Rua A, 123',
   phone: '+5521987654321',
   sessionPriceCents: 12000,

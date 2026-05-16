@@ -26,7 +26,7 @@ beforeEach(async () => {
   await users.create({
     email: 'fisio@example.com',
     passwordHash: await hasher.hash('senha123'),
-    fullName: 'Dra. Raiany',
+    fullName: 'Raiany',
     cref: 'CREFITO-99999',
   });
 });
@@ -69,10 +69,10 @@ describe('AuthService.updateProfile', () => {
   it('updates fullName and cref', async () => {
     const u = (await users.findByEmail('fisio@example.com'))!;
     const updated = await service.updateProfile(u.id, {
-      fullName: 'Dra. Raiany Silva',
+      fullName: 'Raiany',
       cref: 'CREFITO-99999-RJ',
     });
-    expect(updated.fullName).toBe('Dra. Raiany Silva');
+    expect(updated.fullName).toBe('Raiany');
     expect(updated.cref).toBe('CREFITO-99999-RJ');
   });
 

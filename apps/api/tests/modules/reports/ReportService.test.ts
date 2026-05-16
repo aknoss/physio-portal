@@ -12,7 +12,7 @@ import {
 import type { PdfRenderer, MonthlyReportInput } from '../../../src/infra/pdf/PdfRenderer.js';
 
 const samplePatient = {
-  fullName: 'Raiany Silva',
+  fullName: 'Raiany',
   address: 'Rua A, 123',
   phone: '+5521987654321',
   sessionPriceCents: 12000,
@@ -51,7 +51,7 @@ beforeEach(async () => {
   const physio = await users.create({
     email: 'fisio@example.com',
     passwordHash: 'x',
-    fullName: 'Dra. Raiany',
+    fullName: 'Raiany',
     cref: 'CREFITO-12345',
   });
   physioUserId = physio.id;
@@ -149,7 +149,7 @@ describe('ReportService.monthlyReport', () => {
 
     const call = pdf.calls[0]!;
     expect(call.month).toBe('2026-03');
-    expect(call.physio).toEqual({ fullName: 'Dra. Raiany', cref: 'CREFITO-12345' });
+    expect(call.physio).toEqual({ fullName: 'Raiany', cref: 'CREFITO-12345' });
     expect(call.patient).toEqual({
       fullName: patient.fullName,
       address: patient.address,

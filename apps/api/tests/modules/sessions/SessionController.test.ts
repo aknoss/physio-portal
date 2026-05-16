@@ -44,7 +44,7 @@ beforeEach(async () => {
   await fixture.pool.query('TRUNCATE patients CASCADE');
   await fixture.pool.query(
     `INSERT INTO users (email, password_hash, full_name, cref) VALUES ($1, $2, $3, $4)`,
-    ['fisio@example.com', passwordHash, 'Dra. Raiany', 'CREFITO-99999'],
+    ['fisio@example.com', passwordHash, 'Raiany', 'CREFITO-99999'],
   );
 });
 
@@ -66,7 +66,7 @@ async function createPatientWithSchedule(
     .post('/patients')
     .set('Authorization', `Bearer ${token}`)
     .send({
-      fullName: 'Raiany Silva',
+      fullName: 'Raiany',
       address: 'Rua A, 123',
       phone: '+5521987654321',
       sessionPriceCents: 12000,

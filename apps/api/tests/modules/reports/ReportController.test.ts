@@ -63,7 +63,7 @@ beforeEach(async () => {
   await fixture.pool.query('TRUNCATE patients CASCADE');
   await fixture.pool.query(
     `INSERT INTO users (email, password_hash, full_name, cref) VALUES ($1, $2, $3, $4)`,
-    ['fisio@example.com', passwordHash, 'Dra. Raiany', 'CREFITO-99999'],
+    ['fisio@example.com', passwordHash, 'Raiany', 'CREFITO-99999'],
   );
 });
 
@@ -74,7 +74,7 @@ async function login(): Promise<string> {
   return res.body.token as string;
 }
 
-async function createPatient(token: string, fullName = 'Raiany Silva'): Promise<string> {
+async function createPatient(token: string, fullName = 'Raiany'): Promise<string> {
   const created = await request(app)
     .post('/patients')
     .set('Authorization', `Bearer ${token}`)
@@ -283,7 +283,7 @@ describe('GET /reports/patient/:id/monthly.pdf', () => {
     expect(body.subarray(0, 4).toString()).toBe('%PDF');
     const text = await extractText(body);
     expect(text).toContain('Pedro Silva');
-    expect(text).toContain('Dra. Raiany');
+    expect(text).toContain('Raiany');
     expect(text).toContain('CREFITO-99999');
     expect(text).toContain('R$ 600,00'); // 5 sessions × R$120 in March 2026
   });
