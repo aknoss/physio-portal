@@ -85,12 +85,12 @@ describe('POST /patients', () => {
     expect(typeof res.body.createdAt).toBe('string');
   });
 
-  it('returns 400 when phone is not in E.164 BR format', async () => {
+  it('returns 400 when phone contains non-digit characters', async () => {
     const token = await login();
     const res = await request(app)
       .post('/patients')
       .set('Authorization', `Bearer ${token}`)
-      .send({ ...validBody, phone: '21987654321' });
+      .send({ ...validBody, phone: 'not-a-phone' });
     expect(res.status).toBe(400);
     expect(res.body.issues).toBeInstanceOf(Array);
   });

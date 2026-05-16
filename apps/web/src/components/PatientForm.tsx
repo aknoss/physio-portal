@@ -10,7 +10,7 @@ const FormSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(/^\+55\d{10,11}$/, 'Telefone deve estar em formato +55 com DDD'),
+    .regex(/^\+?\d+$/, 'Telefone deve conter apenas números'),
   sessionPriceReais: z.coerce
     .number({ invalid_type_error: 'Informe o valor da sessão' })
     .nonnegative('Valor inválido'),

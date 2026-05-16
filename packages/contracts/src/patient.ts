@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const brPhone = z
   .string()
-  .regex(/^\+55\d{10,11}$/, 'Phone must be E.164 BR (e.g. +5521987654321)');
+  .regex(/^\+?\d+$/, 'Phone must contain digits only (optional leading +)');
 
 export const CreatePatientRequest = z.object({
   fullName: z.string().min(1),

@@ -49,8 +49,8 @@ export function MonthlyReport() {
   const [month, setMonth] = useState(() => defaultMonth(new Date()));
 
   const patients = useQuery({
-    queryKey: ['patients', { active: true }],
-    queryFn: () => listPatients({ active: true }),
+    queryKey: ['patients', {}],
+    queryFn: () => listPatients({}),
   });
 
   const bounds = useMemo(() => monthBounds(month), [month]);

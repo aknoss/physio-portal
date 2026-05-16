@@ -34,7 +34,7 @@ describe('PatientForm', () => {
     await userEvent.click(screen.getByRole('button', { name: /salvar/i }));
     expect(await screen.findByText(/informe o nome/i)).toBeInTheDocument();
     expect(await screen.findByText(/informe o endereço/i)).toBeInTheDocument();
-    expect(await screen.findByText(/telefone deve estar/i)).toBeInTheDocument();
+    expect(await screen.findByText(/telefone deve conter apenas números/i)).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
