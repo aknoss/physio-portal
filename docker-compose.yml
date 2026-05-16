@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: physio
       POSTGRES_PASSWORD: physio
@@ -17,6 +18,7 @@ services:
 
   api:
     image: physio-portal-api:latest
+    restart: unless-stopped
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -38,6 +40,7 @@ services:
 
   web:
     image: physio-portal-web:latest
+    restart: unless-stopped
     build:
       context: .
       dockerfile: apps/web/Dockerfile
