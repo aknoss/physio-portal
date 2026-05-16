@@ -7,11 +7,11 @@ services:
       POSTGRES_PASSWORD: physio
       POSTGRES_DB: physio
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U physio -d physio"]
+      test: ['CMD-SHELL', 'pg_isready -U physio -d physio']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -25,13 +25,13 @@ services:
     environment:
       DATABASE_URL: postgres://physio:physio@postgres:5432/physio
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
-      PORT: "3000"
+      PORT: '3002'
       SEED_EMAIL: ${SEED_EMAIL:-fisio@example.com}
       SEED_PASSWORD: ${SEED_PASSWORD:-changeme}
       SEED_FULL_NAME: ${SEED_FULL_NAME:-Dra. Raiany}
       SEED_CREF: ${SEED_CREF:-CREFITO-99999}
     ports:
-      - "3000:3000"
+      - '3002:3002'
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,7 +45,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     ports:
-      - "5173:80"
+      - '5173:80'
     depends_on:
       - api
 
