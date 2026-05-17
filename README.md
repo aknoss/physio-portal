@@ -2,6 +2,8 @@
 
 Web app for a physiotherapist to manage patients, recurring sessions, weekly/monthly billing, and signed monthly PDF reports.
 
+![Patients list](docs/screenshots/patients.png)
+
 ## Features
 
 - Physiotherapist login (single-user, JWT).
