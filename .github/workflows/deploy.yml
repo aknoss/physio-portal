@@ -19,6 +19,9 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 2222
           script: |
+            export PATH=$PATH:$(npm config get prefix)/bin
             cd ~/physio-portal || exit 1
             git pull origin main || exit 1
-            docker compose up -d --build
+            npm install || exit 1
+            npm run build || exit 1
+            pm2 restart physio-portal
