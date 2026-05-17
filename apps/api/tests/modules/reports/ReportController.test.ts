@@ -127,7 +127,7 @@ describe('Report routes — auth', () => {
 
   it('GET /reports/patient/:id requires a token', async () => {
     const res = await request(app).get(
-      '/reports/patient/00000000-0000-0000-0000-000000000000?from=2026-03-01&to=2026-03-31',
+      '/api/reports/patient/00000000-0000-0000-0000-000000000000?from=2026-03-01&to=2026-03-31',
     );
     expect(res.status).toBe(401);
   });
@@ -236,7 +236,7 @@ describe('GET /reports/patient/:id', () => {
     const token = await login();
     const res = await request(app)
       .get(
-        '/reports/patient/00000000-0000-0000-0000-000000000000?from=2026-03-01&to=2026-03-31',
+        '/api/reports/patient/00000000-0000-0000-0000-000000000000?from=2026-03-01&to=2026-03-31',
       )
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
@@ -255,7 +255,7 @@ describe('GET /reports/patient/:id', () => {
 describe('GET /reports/patient/:id/monthly.pdf', () => {
   it('requires a token', async () => {
     const res = await request(app).get(
-      '/reports/patient/00000000-0000-0000-0000-000000000000/monthly.pdf?month=2026-03',
+      '/api/reports/patient/00000000-0000-0000-0000-000000000000/monthly.pdf?month=2026-03',
     );
     expect(res.status).toBe(401);
   });
@@ -339,7 +339,7 @@ describe('GET /reports/patient/:id/monthly.pdf', () => {
     const token = await login();
     const res = await request(app)
       .get(
-        '/reports/patient/00000000-0000-0000-0000-000000000000/monthly.pdf?month=2026-03',
+        '/api/reports/patient/00000000-0000-0000-0000-000000000000/monthly.pdf?month=2026-03',
       )
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);

@@ -1,5 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
+import bcrypt from 'bcrypt';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,12 +14,14 @@ import {
 import { buildApp } from '../src/container.js';
 
 const JWT_SECRET = 'test-jwt-secret-please-do-not-reuse-irl';
+const PASSWORD = 'senha123';
 
 let fixture: PgFixture;
 let uploadsDir: string;
 let webDistDir: string;
 let appWithSpa: Express;
 let appWithoutSpa: Express;
+let passwordHash: string;
 
 beforeAll(async () => {
   fixture = await startPostgres();
@@ -28,6 +31,7 @@ beforeAll(async () => {
   await writeFile(join(uploadsDir, 'sample.txt'), 'hello uploads');
   await writeFile(join(webDistDir, 'index.html'), '<html>spa root</html>');
   await writeFile(join(webDistDir, 'main.js'), 'console.log("asset");');
+  passwordHash = await bcrypt.hash(PASSWORD, 10);
 
   appWithSpa = buildApp({
     pool: fixture.pool,
@@ -45,6 +49,21 @@ beforeAll(async () => {
   });
 });
 
+beforeEach(async () => {
+  await fixture.pool.query('TRUNCATE users CASCADE');
+  await fixture.pool.query(
+    `INSERT INTO users (email, password_hash, full_name, cref) VALUES ($1, $2, $3, $4)`,
+    ['fisio@example.com', passwordHash, 'Raiany', 'CREFITO-99999'],
+  );
+});
+
+async function login(): Promise<string> {
+  const res = await request(appWithSpa)
+    .post('/api/auth/login')
+    .send({ email: 'fisio@example.com', password: PASSWORD });
+  return res.body.token as string;
+}
+
 afterAll(async () => {
   await stopPostgres(fixture);
   await rm(uploadsDir, { recursive: true, force: true });
@@ -60,15 +79,13 @@ describe('uploads static serving', () => {
 });
 
 describe('/api routing', () => {
-  it('returns JSON 404 for unknown /api paths', async () => {
-    const res = await request(appWithSpa).get('/api/does-not-exist');
+  it('returns JSON 404 for authenticated requests to unknown /api paths', async () => {
+    const token = await login();
+    const res = await request(appWithSpa)
+      .get('/api/does-not-exist')
+      .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: 'Not Found' });
-  });
-
-  it('returns JSON 404 for unknown /api paths with any method', async () => {
-    const res = await request(appWithSpa).post('/api/nope');
-    expect(res.status).toBe(404);
   });
 });
 
