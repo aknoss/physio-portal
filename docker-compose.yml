@@ -16,39 +16,5 @@ services:
       timeout: 5s
       retries: 10
 
-  api:
-    image: physio-portal-api:latest
-    restart: unless-stopped
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    environment:
-      DATABASE_URL: postgres://physio:physio@postgres:5432/physio
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
-      PORT: '3002'
-      SEED_EMAIL: ${SEED_EMAIL:-fisio@example.com}
-      SEED_PASSWORD: ${SEED_PASSWORD:-changeme}
-      SEED_FULL_NAME: ${SEED_FULL_NAME:-Dra. Raiany}
-      SEED_CREF: ${SEED_CREF:-CREFITO-99999}
-    ports:
-      - '3002:3002'
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - api-uploads:/app/apps/api/uploads
-
-  web:
-    image: physio-portal-web:latest
-    restart: unless-stopped
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-    ports:
-      - '5173:80'
-    depends_on:
-      - api
-
 volumes:
   postgres-data:
-  api-uploads:

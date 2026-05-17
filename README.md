@@ -1,6 +1,6 @@
 # physio-portal
 
-Web app for a physiotherapist to manage patients, recurring sessions, weekly/monthly billing, and signed monthly PDF reports. Runs locally via `docker-compose up`.
+Web app for a physiotherapist to manage patients, recurring sessions, weekly/monthly billing, and signed monthly PDF reports.
 
 ## Features
 
@@ -22,47 +22,30 @@ Web app for a physiotherapist to manage patients, recurring sessions, weekly/mon
 
 UI strings are written directly in PT-BR in JSX — the project is monolingual and has no i18n layer. See `plan.md` for the full schema, REST surface, and DI rules.
 
-## Running with Docker
-
-`docker-compose up --build` boots Postgres, API and Web. The API runs pending migrations and seeds the physiotherapist user on startup (idempotent).
-
-| Service  | URL                       |
-| -------- | ------------------------- |
-| Web      | http://localhost:5173     |
-| API      | http://localhost:3000     |
-| Postgres | `localhost:5433` (host)   |
-
-Default seed credentials (override via env on the host):
-
-| Env var          | Default            |
-| ---------------- | ------------------ |
-| `SEED_EMAIL`     | `fisio@example.com`|
-| `SEED_PASSWORD`  | `changeme`         |
-| `SEED_FULL_NAME` | `Dra. Raiany`      |
-| `SEED_CREF`      | `CREFITO-99999`    |
-| `JWT_SECRET`     | `change-me-in-production` |
-
-Persistent volumes:
-
-- `postgres-data` — database files
-- `api-uploads` — uploaded signature PNGs
-
-Re-run the seed manually at any time:
-
-```bash
-docker-compose exec api npm run db:seed -w apps/api
-```
-
-## Local development (without Docker)
+## Local development
 
 ```bash
 npm install
-docker-compose up -d postgres   # database only
+docker compose up -d postgres   # local DB on :5433 (or use a system Postgres)
 cp apps/api/.env.example apps/api/.env
 npm run db:migrate -w apps/api
 npm run db:seed -w apps/api
 npm run dev                     # api on :3000, web on :5173
 ```
+
+Default seed credentials (override via env):
+
+| Env var          | Default                   |
+| ---------------- | ------------------------- |
+| `SEED_EMAIL`     | `fisio@example.com`       |
+| `SEED_PASSWORD`  | `changeme`                |
+| `SEED_FULL_NAME` | `Dra. Raiany`             |
+| `SEED_CREF`      | `CREFITO-99999`           |
+| `JWT_SECRET`     | `change-me-in-production` |
+
+## Production
+
+The API runs under **pm2** on the VPS; the static `apps/web/dist/` bundle is served by **host nginx**, which also reverse-proxies `/api/` and `/uploads/` to `http://localhost:3000`. The GitHub Actions workflow in `.github/workflows/deploy.yml` SSHes in, pulls, runs `npm install && npm run build`, and `pm2 restart physio-portal`.
 
 ## Commands
 
@@ -75,11 +58,11 @@ npm run dev                     # api on :3000, web on :5173
 | `npm run db:migrate:down -w apps/api`   | Revert the last applied migration                  |
 | `npm run db:migrate:status -w apps/api` | Show applied vs pending migrations                 |
 | `npm run db:seed -w apps/api`           | Seed the physiotherapist from env vars             |
-| `docker-compose up --build`             | Boot postgres + api + web                          |
+| `docker compose up -d postgres`         | Boot the local Postgres container                  |
 
 ## Manual smoke checklist
 
-After `docker-compose up --build`, walk through the following:
+After `npm run dev` (with Postgres up and migrations + seed applied), walk through the following:
 
 1. **Login** — open http://localhost:5173, log in with the seeded credentials.
 2. **Create a patient** — Pacientes → Novo paciente. Fill name, address, phone (`+5521987654321`), price, save. The card should appear with a working WhatsApp button.
