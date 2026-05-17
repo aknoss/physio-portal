@@ -43,7 +43,7 @@ beforeEach(async () => {
 });
 
 async function login(): Promise<string> {
-  const res = await request(app).post('/auth/login').send({
+  const res = await request(app).post('/api/auth/login').send({
     email: 'fisio@example.com',
     password: PASSWORD,
   });
@@ -52,7 +52,7 @@ async function login(): Promise<string> {
 
 describe('POST /auth/login', () => {
   it('returns 200 with token and user on valid credentials', async () => {
-    const res = await request(app).post('/auth/login').send({
+    const res = await request(app).post('/api/auth/login').send({
       email: 'fisio@example.com',
       password: PASSWORD,
     });
@@ -63,7 +63,7 @@ describe('POST /auth/login', () => {
   });
 
   it('returns 401 on wrong password', async () => {
-    const res = await request(app).post('/auth/login').send({
+    const res = await request(app).post('/api/auth/login').send({
       email: 'fisio@example.com',
       password: 'wrong',
     });
@@ -71,7 +71,7 @@ describe('POST /auth/login', () => {
   });
 
   it('returns 400 with issues on an invalid body', async () => {
-    const res = await request(app).post('/auth/login').send({ email: 'not-email' });
+    const res = await request(app).post('/api/auth/login').send({ email: 'not-email' });
     expect(res.status).toBe(400);
     expect(res.body.issues).toBeInstanceOf(Array);
     expect(res.body.issues.length).toBeGreaterThan(0);
@@ -81,21 +81,21 @@ describe('POST /auth/login', () => {
 describe('GET /auth/me', () => {
   it('returns the user when a valid token is sent', async () => {
     const token = await login();
-    const res = await request(app).get('/auth/me').set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.email).toBe('fisio@example.com');
     expect(res.body.passwordHash).toBeUndefined();
   });
 
   it('returns 401 without an Authorization header', async () => {
-    const res = await request(app).get('/auth/me');
+    const res = await request(app).get('/api/auth/me');
     expect(res.status).toBe(401);
   });
 
   it('returns 404 when the authenticated user no longer exists', async () => {
     const token = await login();
     await fixture.pool.query('TRUNCATE users CASCADE');
-    const res = await request(app).get('/auth/me').set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
   });
 });
@@ -104,7 +104,7 @@ describe('PATCH /auth/me', () => {
   it('updates the profile and returns the new user', async () => {
     const token = await login();
     const res = await request(app)
-      .patch('/auth/me')
+      .patch('/api/auth/me')
       .set('Authorization', `Bearer ${token}`)
       .send({ fullName: 'Raiany', cref: 'CREFITO-99999-RJ' });
     expect(res.status).toBe(200);
@@ -115,7 +115,7 @@ describe('PATCH /auth/me', () => {
   it('returns 400 on invalid body', async () => {
     const token = await login();
     const res = await request(app)
-      .patch('/auth/me')
+      .patch('/api/auth/me')
       .set('Authorization', `Bearer ${token}`)
       .send({ fullName: '', cref: '' });
     expect(res.status).toBe(400);
@@ -126,7 +126,7 @@ describe('POST /auth/me/signature', () => {
   it('stores a PNG and updates signatureUrl', async () => {
     const token = await login();
     const res = await request(app)
-      .post('/auth/me/signature')
+      .post('/api/auth/me/signature')
       .set('Authorization', `Bearer ${token}`)
       .attach('signature', Buffer.from('PNGDATA'), {
         filename: 'sig.png',
@@ -139,7 +139,7 @@ describe('POST /auth/me/signature', () => {
   it('returns 400 when no file is attached', async () => {
     const token = await login();
     const res = await request(app)
-      .post('/auth/me/signature')
+      .post('/api/auth/me/signature')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(400);
   });
@@ -147,7 +147,7 @@ describe('POST /auth/me/signature', () => {
   it('returns 400 when the file is not a PNG', async () => {
     const token = await login();
     const res = await request(app)
-      .post('/auth/me/signature')
+      .post('/api/auth/me/signature')
       .set('Authorization', `Bearer ${token}`)
       .attach('signature', Buffer.from('hello'), {
         filename: 'sig.txt',

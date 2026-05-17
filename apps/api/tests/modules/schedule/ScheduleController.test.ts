@@ -49,7 +49,7 @@ beforeEach(async () => {
 });
 
 async function login(): Promise<string> {
-  const res = await request(app).post('/auth/login').send({
+  const res = await request(app).post('/api/auth/login').send({
     email: 'fisio@example.com',
     password: PASSWORD,
   });
@@ -58,7 +58,7 @@ async function login(): Promise<string> {
 
 async function createPatient(token: string): Promise<string> {
   const res = await request(app)
-    .post('/patients')
+    .post('/api/patients')
     .set('Authorization', `Bearer ${token}`)
     .send({
       fullName: 'Raiany',
@@ -73,7 +73,7 @@ async function createPatient(token: string): Promise<string> {
 describe('Schedule routes — auth', () => {
   it('PUT /patients/:id/schedule requires a token', async () => {
     const res = await request(app)
-      .put('/patients/00000000-0000-0000-0000-000000000000/schedule')
+      .put('/api/patients/00000000-0000-0000-0000-000000000000/schedule')
       .send({ weekdays: [1], startDate: '2026-01-01' });
     expect(res.status).toBe(401);
   });
@@ -84,7 +84,7 @@ describe('PUT /patients/:id/schedule', () => {
     const token = await login();
     const patientId = await createPatient(token);
     const res = await request(app)
-      .put(`/patients/${patientId}/schedule`)
+      .put(`/api/patients/${patientId}/schedule`)
       .set('Authorization', `Bearer ${token}`)
       .send({ weekdays: [1, 3, 5], startDate: '2026-03-01' });
     expect(res.status).toBe(200);
@@ -98,11 +98,11 @@ describe('PUT /patients/:id/schedule', () => {
     const token = await login();
     const patientId = await createPatient(token);
     await request(app)
-      .put(`/patients/${patientId}/schedule`)
+      .put(`/api/patients/${patientId}/schedule`)
       .set('Authorization', `Bearer ${token}`)
       .send({ weekdays: [1], startDate: '2026-01-01' });
     const res = await request(app)
-      .put(`/patients/${patientId}/schedule`)
+      .put(`/api/patients/${patientId}/schedule`)
       .set('Authorization', `Bearer ${token}`)
       .send({ weekdays: [2, 4], startDate: '2026-04-01', endDate: '2026-12-31' });
     expect(res.body.weekdays).toEqual([2, 4]);
@@ -113,7 +113,7 @@ describe('PUT /patients/:id/schedule', () => {
     const token = await login();
     const patientId = await createPatient(token);
     const res = await request(app)
-      .put(`/patients/${patientId}/schedule`)
+      .put(`/api/patients/${patientId}/schedule`)
       .set('Authorization', `Bearer ${token}`)
       .send({ weekdays: [1], startDate: '2026-01-01', endDate: null });
     expect(res.body.endDate).toBeNull();
@@ -123,7 +123,7 @@ describe('PUT /patients/:id/schedule', () => {
     const token = await login();
     const patientId = await createPatient(token);
     const res = await request(app)
-      .put(`/patients/${patientId}/schedule`)
+      .put(`/api/patients/${patientId}/schedule`)
       .set('Authorization', `Bearer ${token}`)
       .send({ weekdays: [7], startDate: '2026-01-01' });
     expect(res.status).toBe(400);
@@ -133,7 +133,7 @@ describe('PUT /patients/:id/schedule', () => {
     const token = await login();
     const patientId = await createPatient(token);
     const res = await request(app)
-      .put(`/patients/${patientId}/schedule`)
+      .put(`/api/patients/${patientId}/schedule`)
       .set('Authorization', `Bearer ${token}`)
       .send({ weekdays: [1, 1], startDate: '2026-01-01' });
     expect(res.status).toBe(400);
@@ -143,7 +143,7 @@ describe('PUT /patients/:id/schedule', () => {
     const token = await login();
     const patientId = await createPatient(token);
     const res = await request(app)
-      .put(`/patients/${patientId}/schedule`)
+      .put(`/api/patients/${patientId}/schedule`)
       .set('Authorization', `Bearer ${token}`)
       .send({ weekdays: [1], startDate: '2026-03-15', endDate: '2026-03-01' });
     expect(res.status).toBe(400);
@@ -152,7 +152,7 @@ describe('PUT /patients/:id/schedule', () => {
   it('returns 404 when the patient does not exist', async () => {
     const token = await login();
     const res = await request(app)
-      .put('/patients/00000000-0000-0000-0000-000000000000/schedule')
+      .put('/api/patients/00000000-0000-0000-0000-000000000000/schedule')
       .set('Authorization', `Bearer ${token}`)
       .send({ weekdays: [1], startDate: '2026-01-01' });
     expect(res.status).toBe(404);
@@ -164,11 +164,11 @@ describe('GET /patients/:id/schedule', () => {
     const token = await login();
     const patientId = await createPatient(token);
     await request(app)
-      .put(`/patients/${patientId}/schedule`)
+      .put(`/api/patients/${patientId}/schedule`)
       .set('Authorization', `Bearer ${token}`)
       .send({ weekdays: [1], startDate: '2026-01-01' });
     const res = await request(app)
-      .get(`/patients/${patientId}/schedule`)
+      .get(`/api/patients/${patientId}/schedule`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.weekdays).toEqual([1]);
@@ -177,7 +177,7 @@ describe('GET /patients/:id/schedule', () => {
   it('returns 404 when the patient does not exist', async () => {
     const token = await login();
     const res = await request(app)
-      .get('/patients/00000000-0000-0000-0000-000000000000/schedule')
+      .get('/api/patients/00000000-0000-0000-0000-000000000000/schedule')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
   });
@@ -186,7 +186,7 @@ describe('GET /patients/:id/schedule', () => {
     const token = await login();
     const patientId = await createPatient(token);
     const res = await request(app)
-      .get(`/patients/${patientId}/schedule`)
+      .get(`/api/patients/${patientId}/schedule`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
   });

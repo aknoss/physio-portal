@@ -49,7 +49,7 @@ beforeEach(async () => {
 });
 
 async function login(): Promise<string> {
-  const res = await request(app).post('/auth/login').send({
+  const res = await request(app).post('/api/auth/login').send({
     email: 'fisio@example.com',
     password: PASSWORD,
   });
@@ -66,7 +66,7 @@ const validBody = {
 
 describe('Patients routes — auth', () => {
   it('GET /patients requires a token', async () => {
-    const res = await request(app).get('/patients');
+    const res = await request(app).get('/api/patients');
     expect(res.status).toBe(401);
   });
 });
@@ -75,7 +75,7 @@ describe('POST /patients', () => {
   it('creates a patient and returns 201 with the dto', async () => {
     const token = await login();
     const res = await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send(validBody);
     expect(res.status).toBe(201);
@@ -88,7 +88,7 @@ describe('POST /patients', () => {
   it('returns 400 when phone contains non-digit characters', async () => {
     const token = await login();
     const res = await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send({ ...validBody, phone: 'not-a-phone' });
     expect(res.status).toBe(400);
@@ -98,7 +98,7 @@ describe('POST /patients', () => {
   it('returns 400 when required fields are missing', async () => {
     const token = await login();
     const res = await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send({ fullName: '' });
     expect(res.status).toBe(400);
@@ -109,14 +109,14 @@ describe('GET /patients', () => {
   it('lists all patients ordered by name', async () => {
     const token = await login();
     await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send({ ...validBody, fullName: 'Bruno' });
     await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send({ ...validBody, fullName: 'Ana' });
-    const res = await request(app).get('/patients').set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/patients').set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.map((p: { fullName: string }) => p.fullName)).toEqual(['Ana', 'Bruno']);
   });
@@ -124,18 +124,18 @@ describe('GET /patients', () => {
   it('filters by active=false', async () => {
     const token = await login();
     const created = await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send(validBody);
     await request(app)
-      .delete(`/patients/${created.body.id}`)
+      .delete(`/api/patients/${created.body.id}`)
       .set('Authorization', `Bearer ${token}`);
     const inactive = await request(app)
-      .get('/patients?active=false')
+      .get('/api/patients?active=false')
       .set('Authorization', `Bearer ${token}`);
     expect(inactive.body).toHaveLength(1);
     const active = await request(app)
-      .get('/patients?active=true')
+      .get('/api/patients?active=true')
       .set('Authorization', `Bearer ${token}`);
     expect(active.body).toHaveLength(0);
   });
@@ -143,15 +143,15 @@ describe('GET /patients', () => {
   it('searches by name', async () => {
     const token = await login();
     await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send({ ...validBody, fullName: 'Ana Souza' });
     await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send({ ...validBody, fullName: 'Bruno Lima' });
     const res = await request(app)
-      .get('/patients?search=bru')
+      .get('/api/patients?search=bru')
       .set('Authorization', `Bearer ${token}`);
     expect(res.body.map((p: { fullName: string }) => p.fullName)).toEqual(['Bruno Lima']);
   });
@@ -159,7 +159,7 @@ describe('GET /patients', () => {
   it('returns 400 when query is invalid', async () => {
     const token = await login();
     const res = await request(app)
-      .get('/patients?active=maybe')
+      .get('/api/patients?active=maybe')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(400);
   });
@@ -169,11 +169,11 @@ describe('GET /patients/:id', () => {
   it('returns the patient when found', async () => {
     const token = await login();
     const created = await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send(validBody);
     const res = await request(app)
-      .get(`/patients/${created.body.id}`)
+      .get(`/api/patients/${created.body.id}`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.id).toBe(created.body.id);
@@ -182,7 +182,7 @@ describe('GET /patients/:id', () => {
   it('returns 404 when the patient does not exist', async () => {
     const token = await login();
     const res = await request(app)
-      .get('/patients/00000000-0000-0000-0000-000000000000')
+      .get('/api/patients/00000000-0000-0000-0000-000000000000')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
   });
@@ -192,11 +192,11 @@ describe('PATCH /patients/:id', () => {
   it('updates the provided fields', async () => {
     const token = await login();
     const created = await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send(validBody);
     const res = await request(app)
-      .patch(`/patients/${created.body.id}`)
+      .patch(`/api/patients/${created.body.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ fullName: 'Outro Nome' });
     expect(res.status).toBe(200);
@@ -206,11 +206,11 @@ describe('PATCH /patients/:id', () => {
   it('updates every mutable field when all are provided', async () => {
     const token = await login();
     const created = await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send(validBody);
     const res = await request(app)
-      .patch(`/patients/${created.body.id}`)
+      .patch(`/api/patients/${created.body.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({
         fullName: 'Nome Novo',
@@ -232,11 +232,11 @@ describe('PATCH /patients/:id', () => {
   it('returns 400 when no fields are provided', async () => {
     const token = await login();
     const created = await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send(validBody);
     const res = await request(app)
-      .patch(`/patients/${created.body.id}`)
+      .patch(`/api/patients/${created.body.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({});
     expect(res.status).toBe(400);
@@ -245,7 +245,7 @@ describe('PATCH /patients/:id', () => {
   it('returns 404 when the patient does not exist', async () => {
     const token = await login();
     const res = await request(app)
-      .patch('/patients/00000000-0000-0000-0000-000000000000')
+      .patch('/api/patients/00000000-0000-0000-0000-000000000000')
       .set('Authorization', `Bearer ${token}`)
       .send({ fullName: 'X' });
     expect(res.status).toBe(404);
@@ -256,11 +256,11 @@ describe('DELETE /patients/:id', () => {
   it('soft-deletes the patient (active=false) and returns 200', async () => {
     const token = await login();
     const created = await request(app)
-      .post('/patients')
+      .post('/api/patients')
       .set('Authorization', `Bearer ${token}`)
       .send(validBody);
     const res = await request(app)
-      .delete(`/patients/${created.body.id}`)
+      .delete(`/api/patients/${created.body.id}`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.active).toBe(false);
@@ -269,7 +269,7 @@ describe('DELETE /patients/:id', () => {
   it('returns 404 when the patient does not exist', async () => {
     const token = await login();
     const res = await request(app)
-      .delete('/patients/00000000-0000-0000-0000-000000000000')
+      .delete('/api/patients/00000000-0000-0000-0000-000000000000')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
   });

@@ -1,4 +1,5 @@
 import './db/pgTypes.js';
+import { join } from 'node:path';
 import express, { type Express } from 'express';
 import type { Pool } from 'pg';
 import { AuthService } from './modules/auth/AuthService.js';
@@ -28,6 +29,7 @@ export type AppConfig = {
   jwtSecret: string;
   uploadsDir: string;
   uploadsPublicPrefix: string;
+  webDistDir?: string;
 };
 
 export function buildApp(config: AppConfig): Express {
@@ -63,11 +65,25 @@ export function buildApp(config: AppConfig): Express {
 
   const app = express();
   app.use(express.json());
-  app.use(createAuthRouter(authService, tokenSigner));
-  app.use(createPatientRouter(patientService, tokenSigner));
-  app.use(createScheduleRouter(scheduleService, tokenSigner));
-  app.use(createSessionRouter(sessionService, tokenSigner));
-  app.use(createReportRouter(reportService, tokenSigner));
+  app.use(config.uploadsPublicPrefix, express.static(config.uploadsDir));
+  app.use('/api', createAuthRouter(authService, tokenSigner));
+  app.use('/api', createPatientRouter(patientService, tokenSigner));
+  app.use('/api', createScheduleRouter(scheduleService, tokenSigner));
+  app.use('/api', createSessionRouter(sessionService, tokenSigner));
+  app.use('/api', createReportRouter(reportService, tokenSigner));
+  app.use('/api', (_req, res) => {
+    res.status(404).json({ error: 'Not Found' });
+  });
+
+  if (config.webDistDir) {
+    const webDistDir = config.webDistDir;
+    app.use(express.static(webDistDir));
+    app.use((req, res, next) => {
+      if (req.method !== 'GET') return next();
+      res.sendFile(join(webDistDir, 'index.html'));
+    });
+  }
+
   app.use(errorHandler);
   return app;
 }

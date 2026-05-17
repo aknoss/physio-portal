@@ -69,14 +69,14 @@ beforeEach(async () => {
 
 async function login(): Promise<string> {
   const res = await request(app)
-    .post('/auth/login')
+    .post('/api/auth/login')
     .send({ email: 'fisio@example.com', password: PASSWORD });
   return res.body.token as string;
 }
 
 async function createPatient(token: string, fullName = 'Raiany'): Promise<string> {
   const created = await request(app)
-    .post('/patients')
+    .post('/api/patients')
     .set('Authorization', `Bearer ${token}`)
     .send({
       fullName,
@@ -95,7 +95,7 @@ async function setupSchedule(
   startDate: string,
 ): Promise<void> {
   await request(app)
-    .put(`/patients/${patientId}/schedule`)
+    .put(`/api/patients/${patientId}/schedule`)
     .set('Authorization', `Bearer ${token}`)
     .send({ weekdays, startDate, endDate: null });
 }
@@ -108,12 +108,12 @@ async function generateAndMarkAll(
   status: 'COMPLETED' | 'MISSED' | 'RESCHEDULED',
 ): Promise<void> {
   const res = await request(app)
-    .post(`/patients/${patientId}/sessions/generate`)
+    .post(`/api/patients/${patientId}/sessions/generate`)
     .set('Authorization', `Bearer ${token}`)
     .send({ from, to });
   for (const s of res.body as { id: string }[]) {
     await request(app)
-      .patch(`/sessions/${s.id}`)
+      .patch(`/api/sessions/${s.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ status });
   }
@@ -121,7 +121,7 @@ async function generateAndMarkAll(
 
 describe('Report routes — auth', () => {
   it('GET /reports/summary requires a token', async () => {
-    const res = await request(app).get('/reports/summary?from=2026-03-01&to=2026-03-31');
+    const res = await request(app).get('/api/reports/summary?from=2026-03-01&to=2026-03-31');
     expect(res.status).toBe(401);
   });
 
@@ -143,7 +143,7 @@ describe('GET /reports/summary', () => {
     await generateAndMarkAll(token, a, '2026-03-01', '2026-03-31', 'COMPLETED');
     await generateAndMarkAll(token, b, '2026-03-01', '2026-03-31', 'COMPLETED');
     const res = await request(app)
-      .get('/reports/summary?from=2026-03-01&to=2026-03-31')
+      .get('/api/reports/summary?from=2026-03-01&to=2026-03-31')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -157,7 +157,7 @@ describe('GET /reports/summary', () => {
   it('returns 400 when from > to', async () => {
     const token = await login();
     const res = await request(app)
-      .get('/reports/summary?from=2026-04-01&to=2026-03-01')
+      .get('/api/reports/summary?from=2026-04-01&to=2026-03-01')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(400);
   });
@@ -165,7 +165,7 @@ describe('GET /reports/summary', () => {
   it('returns 400 when from or to is missing', async () => {
     const token = await login();
     const res = await request(app)
-      .get('/reports/summary?from=2026-03-01')
+      .get('/api/reports/summary?from=2026-03-01')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(400);
   });
@@ -173,7 +173,7 @@ describe('GET /reports/summary', () => {
 
 describe('GET /reports/ranking', () => {
   it('requires a token', async () => {
-    const res = await request(app).get('/reports/ranking?from=2026-03-01&to=2026-03-31');
+    const res = await request(app).get('/api/reports/ranking?from=2026-03-01&to=2026-03-31');
     expect(res.status).toBe(401);
   });
 
@@ -186,7 +186,7 @@ describe('GET /reports/ranking', () => {
     await generateAndMarkAll(token, a, '2026-03-01', '2026-03-31', 'COMPLETED');
     await generateAndMarkAll(token, b, '2026-03-01', '2026-03-31', 'COMPLETED');
     const res = await request(app)
-      .get('/reports/ranking?from=2026-03-01&to=2026-03-31')
+      .get('/api/reports/ranking?from=2026-03-01&to=2026-03-31')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual([
@@ -198,7 +198,7 @@ describe('GET /reports/ranking', () => {
   it('returns an empty array when no patient billed in the range', async () => {
     const token = await login();
     const res = await request(app)
-      .get('/reports/ranking?from=2026-03-01&to=2026-03-31')
+      .get('/api/reports/ranking?from=2026-03-01&to=2026-03-31')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
@@ -207,7 +207,7 @@ describe('GET /reports/ranking', () => {
   it('returns 400 when from is after to', async () => {
     const token = await login();
     const res = await request(app)
-      .get('/reports/ranking?from=2026-04-01&to=2026-03-01')
+      .get('/api/reports/ranking?from=2026-04-01&to=2026-03-01')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(400);
   });
@@ -220,7 +220,7 @@ describe('GET /reports/patient/:id', () => {
     await setupSchedule(token, id, [1], '2026-01-01');
     await generateAndMarkAll(token, id, '2026-03-01', '2026-03-31', 'COMPLETED');
     const res = await request(app)
-      .get(`/reports/patient/${id}?from=2026-03-01&to=2026-03-31`)
+      .get(`/api/reports/patient/${id}?from=2026-03-01&to=2026-03-31`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -246,7 +246,7 @@ describe('GET /reports/patient/:id', () => {
     const token = await login();
     const id = await createPatient(token);
     const res = await request(app)
-      .get(`/reports/patient/${id}?from=2026/03/01&to=2026-03-31`)
+      .get(`/api/reports/patient/${id}?from=2026/03/01&to=2026-03-31`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(400);
   });
@@ -267,7 +267,7 @@ describe('GET /reports/patient/:id/monthly.pdf', () => {
     await generateAndMarkAll(token, patientId, '2026-03-01', '2026-03-31', 'COMPLETED');
 
     const res = await request(app)
-      .get(`/reports/patient/${patientId}/monthly.pdf?month=2026-03`)
+      .get(`/api/reports/patient/${patientId}/monthly.pdf?month=2026-03`)
       .set('Authorization', `Bearer ${token}`)
       .buffer(true)
       .parse((response, callback) => {
@@ -293,7 +293,7 @@ describe('GET /reports/patient/:id/monthly.pdf', () => {
     // upload signature
     await writeFile(join(uploadsDir, 'placeholder.txt'), ''); // ensure dir exists
     const sigRes = await request(app)
-      .post('/auth/me/signature')
+      .post('/api/auth/me/signature')
       .set('Authorization', `Bearer ${token}`)
       .attach('signature', ONE_PX_PNG, { filename: 'sig.png', contentType: 'image/png' });
     expect(sigRes.status).toBe(200);
@@ -303,7 +303,7 @@ describe('GET /reports/patient/:id/monthly.pdf', () => {
     await generateAndMarkAll(token, patientId, '2026-03-01', '2026-03-31', 'COMPLETED');
 
     const res = await request(app)
-      .get(`/reports/patient/${patientId}/monthly.pdf?month=2026-03`)
+      .get(`/api/reports/patient/${patientId}/monthly.pdf?month=2026-03`)
       .set('Authorization', `Bearer ${token}`)
       .buffer(true)
       .parse((response, callback) => {
@@ -321,7 +321,7 @@ describe('GET /reports/patient/:id/monthly.pdf', () => {
     const token = await login();
     const id = await createPatient(token);
     const res = await request(app)
-      .get(`/reports/patient/${id}/monthly.pdf`)
+      .get(`/api/reports/patient/${id}/monthly.pdf`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(400);
   });
@@ -330,7 +330,7 @@ describe('GET /reports/patient/:id/monthly.pdf', () => {
     const token = await login();
     const id = await createPatient(token);
     const res = await request(app)
-      .get(`/reports/patient/${id}/monthly.pdf?month=2026-3`)
+      .get(`/api/reports/patient/${id}/monthly.pdf?month=2026-3`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(400);
   });

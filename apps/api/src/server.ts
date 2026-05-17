@@ -23,6 +23,7 @@ const app = buildApp({
   jwtSecret,
   uploadsDir: join(here, '../uploads'),
   uploadsPublicPrefix: '/uploads',
+  webDistDir: process.env.WEB_DIST_DIR ?? join(here, '../../../web/dist'),
 });
 
 const port = Number.parseInt(process.env.PORT ?? '3000', 10);
