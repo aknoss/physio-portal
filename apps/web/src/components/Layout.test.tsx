@@ -81,4 +81,38 @@ describe('Layout', () => {
     );
     expect(window.localStorage.getItem('physio.token')).toBeNull();
   });
+
+  it('starts with the sidebar closed and toggles it via the hamburger menu', async () => {
+    setup();
+    await waitFor(() => screen.getByText('Dra. Ana'));
+    const sidebar = screen.getByRole('complementary');
+    expect(sidebar).toHaveAttribute('data-open', 'false');
+    await userEvent.click(screen.getByRole('button', { name: /abrir menu/i }));
+    expect(sidebar).toHaveAttribute('data-open', 'true');
+    await userEvent.click(screen.getByRole('button', { name: /fechar menu/i }));
+    expect(sidebar).toHaveAttribute('data-open', 'false');
+  });
+
+  it('closes the sidebar after a nav link is clicked', async () => {
+    setup();
+    await waitFor(() => screen.getByText('Dra. Ana'));
+    await userEvent.click(screen.getByRole('button', { name: /abrir menu/i }));
+    const sidebar = screen.getByRole('complementary');
+    expect(sidebar).toHaveAttribute('data-open', 'true');
+    await userEvent.click(screen.getByRole('link', { name: /pacientes/i }));
+    expect(
+      await screen.findByText('página de pacientes'),
+    ).toBeInTheDocument();
+    expect(sidebar).toHaveAttribute('data-open', 'false');
+  });
+
+  it('closes the sidebar when the backdrop is clicked', async () => {
+    setup();
+    await waitFor(() => screen.getByText('Dra. Ana'));
+    await userEvent.click(screen.getByRole('button', { name: /abrir menu/i }));
+    const sidebar = screen.getByRole('complementary');
+    expect(sidebar).toHaveAttribute('data-open', 'true');
+    await userEvent.click(screen.getByTestId('sidebar-backdrop'));
+    expect(sidebar).toHaveAttribute('data-open', 'false');
+  });
 });
