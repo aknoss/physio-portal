@@ -9,7 +9,7 @@ Web app for a physiotherapist to manage patients, recurring sessions, weekly/mon
 - Physiotherapist login (single-user, JWT).
 - Patient CRUD with a direct WhatsApp link.
 - Per-patient recurring schedule (fixed weekdays) with automatic session generation.
-- Session status as **Realizada / Falta / Remarcada** — only `REALIZADA` bills.
+- Session status enum `SCHEDULED / COMPLETED / MISSED / RESCHEDULED`.
 - Dashboard with weekly/monthly totals plus a patient ranking.
 - Monthly per-patient PDF with image signature and total in BRL.
 
@@ -51,16 +51,16 @@ The API runs under **pm2** on the VPS; the static `apps/web/dist/` bundle is ser
 
 ## Commands
 
-| Command                                 | Purpose                                            |
-| --------------------------------------- | -------------------------------------------------- |
-| `npm run dev`                           | Start API (`:3000`) and Web (`:5173`)              |
-| `npm test`                              | Backend + frontend (100% gate on api, 80% on web)  |
-| `npm run lint` / `npm run typecheck`    | Static checks across workspaces                    |
-| `npm run db:migrate -w apps/api`        | Apply pending migrations                           |
-| `npm run db:migrate:down -w apps/api`   | Revert the last applied migration                  |
-| `npm run db:migrate:status -w apps/api` | Show applied vs pending migrations                 |
-| `npm run db:seed -w apps/api`           | Seed the physiotherapist from env vars             |
-| `docker compose up -d postgres`         | Boot the local Postgres container                  |
+| Command                                 | Purpose                                           |
+| --------------------------------------- | ------------------------------------------------- |
+| `npm run dev`                           | Start API (`:3000`) and Web (`:5173`)             |
+| `npm test`                              | Backend + frontend (100% gate on api, 80% on web) |
+| `npm run lint` / `npm run typecheck`    | Static checks across workspaces                   |
+| `npm run db:migrate -w apps/api`        | Apply pending migrations                          |
+| `npm run db:migrate:down -w apps/api`   | Revert the last applied migration                 |
+| `npm run db:migrate:status -w apps/api` | Show applied vs pending migrations                |
+| `npm run db:seed -w apps/api`           | Seed the physiotherapist from env vars            |
+| `docker compose up -d postgres`         | Boot the local Postgres container                 |
 
 ## Manual smoke checklist
 
